@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaConsciente - Entenda e controle o consumo de água da sua família</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- ==================== 1. TELA INICIAL (SPLASH) ==================== -->
+        <section id="screen-splash" class="screen active">
+            <div class="splash-content">
+                <div class="brand-header">
+                    <h1 class="app-title"><i class="fa-solid fa-droplet logo-icon"></i> AquaConsciente</h1>
+                    <p class="app-subtitle">Entenda e controle o consumo de água da sua família. Simples, visual e gratuito.</p>
+                </div>
+                
+                <!-- Grande Gota Centralizada Estática -->
+                <div class="droplet-container-static">
+                    <svg viewBox="0 0 100 120" class="static-droplet-svg">
+                        <defs>
+                            <linearGradient id="droplet-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00f2fe" />
+                                <stop offset="100%" stop-color="#4facfe" />
+                            </linearGradient>
+                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur stdDeviation="4" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
+                        <path d="M50,15 C50,15 85,55 85,80 C85,99.3 69.3,115 50,115 C30.7,115 15,99.3 15,80 C15,55 50,15 50,15 Z" fill="url(#droplet-grad)" filter="url(#glow)"/>
+                    </svg>
+                </div>
+
+                <div class="action-group">
+                    <button class="btn btn-primary btn-large" id="btn-splash-start">
+                        Começar agora <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-large" id="btn-splash-onboarding">
+                        Saiba mais <i class="fa-solid fa-circle-info"></i>
+                    </button>
+                </div>
+
+                <footer class="splash-footer">
+                    <p>Transforme seus hábitos em economia de água e dinheiro.</p>
+                </footer>
+            </div>
+        </section>
+
+        <!-- ==================== 2. ONBOARDING (SAIBA MAIS) ==================== -->
+        <section id="screen-onboarding" class="screen hidden">
+            <!-- Detalhes gráficos de fundo (água, gotas, ondas) em baixa opacidade -->
+            <div class="onboarding-bg-decorations">
+                <svg class="decor-drop drop-1" viewBox="0 0 30 40"><path d="M15 3 C15 3 25 15 25 25 A 10 10 0 0 1 5 25 C 5 15 15 3 15 3 Z" fill="currentColor" /></svg>
+                <svg class="decor-drop drop-2" viewBox="0 0 30 40"><path d="M15 3 C15 3 25 15 25 25 A 10 10 0 0 1 5 25 C 5 15 15 3 15 3 Z" fill="currentColor" /></svg>
+                <svg class="decor-wave" viewBox="0 0 100 20"><path d="M0 10 Q25 5 50 10 T100 10 L100 20 L0 20 Z" fill="currentColor" /></svg>
+            </div>
+
+            <div class="onboarding-container">
+                <div class="onboarding-slides-wrapper">
+                    <!-- Slide 1 -->
+                    <div class="onboarding-slide active" data-slide="0">
+                        <div class="onboarding-illustration">
+                            <div class="illustration-icon-wrapper">
+                                <i class="fa-solid fa-chart-line illustration-icon"></i>
+                            </div>
+                        </div>
+                        <h2 class="onboarding-title">Entenda seu consumo</h2>
+                        <p class="onboarding-desc">Descubra como os hábitos da sua residência influenciam o consumo de água e sua conta mensal.</p>
+                    </div>
+
+                    <!-- Slide 2 -->
+                    <div class="onboarding-slide" data-slide="1">
+                        <div class="onboarding-illustration">
+                            <div class="illustration-icon-wrapper">
+                                <i class="fa-solid fa-faucet-drip illustration-icon"></i>
+                            </div>
+                        </div>
+                        <h2 class="onboarding-title">Registre suas atividades</h2>
+                        <p class="onboarding-desc">Registre atividades do dia a dia para estimar o consumo da sua residência.</p>
+                    </div>
+
+                    <!-- Slide 3 -->
+                    <div class="onboarding-slide" data-slide="2">
+                        <div class="onboarding-illustration">
+                            <div class="illustration-icon-wrapper">
+                                <i class="fa-solid fa-hand-holding-dollar illustration-icon"></i>
+                            </div>
+                        </div>
+                        <h2 class="onboarding-title">Acompanhe sua economia</h2>
+                        <p class="onboarding-desc">Compare o consumo estimado com sua conta real e descubra quanto você pode economizar ao longo do tempo.</p>
+                        <p class="onboarding-incentive">Pequenas mudanças geram grandes economias de água e dinheiro.</p>
+                    </div>
+                </div>
+
+                <!-- Indicadores de Progresso -->
+                <div class="onboarding-indicators">
+                    <span class="dot active" data-slide-target="0"></span>
+                    <span class="dot" data-slide-target="1"></span>
+                    <span class="dot" data-slide-target="2"></span>
+                </div>
+
+                <!-- Botões de Controle -->
+                <div class="onboarding-footer">
+                    <button class="btn btn-text btn-pular" id="btn-onboarding-skip">
+                        Pular <i class="fa-solid fa-chevron-right icon-pular"></i>
+                    </button>
+                    <button class="btn btn-primary" id="btn-onboarding-next">
+                        Próximo <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 3. CADASTRO DA RESIDÊNCIA ==================== -->
+        <section id="screen-cadastro" class="screen hidden">
+            <div class="screen-header">
+                <button class="btn-back" id="btn-cadastro-back"><i class="fa-solid fa-chevron-left"></i></button>
+                <h2>Sobre sua Residência</h2>
+            </div>
+            
+            <div class="scroll-content">
+                <p class="section-intro">Essas informações nos ajudam a calcular uma estimativa inicial de consumo ideal para sua família.</p>
+                
+                <form id="form-cadastro" class="form-container">
+                    
+                    <div class="form-group">
+                        <label class="form-section-title">Qual é o tipo da sua residência?</label>
+                        <p class="form-section-desc">Essa informação nos ajuda a estimar um consumo inicial mais próximo da realidade.</p>
+                        
+                        <!-- Seção Casas -->
+                        <h4 class="card-grid-title"><i class="fa-solid fa-house"></i> Casas</h4>
+                        <div class="residence-cards-grid">
+                            <!-- Card 1: Casa Pequena -->
+                            <div class="residence-card" data-val="casa-pequena">
+                                <span class="check-badge"><i class="fa-solid fa-check"></i></span>
+                                <div class="residence-card-illustration">
+                                    <i class="fa-solid fa-house-chimney"></i>
+                                </div>
+                                <div class="residence-card-info">
+                                    <span class="card-residence-name"><i class="fa-solid fa-house-chimney" style="margin-right: 0.35rem;"></i> Casa Pequena</span>
+                                    <span class="card-residence-desc">Ideal para 1 a 2 moradores</span>
+                                    <span class="card-residence-consumption">Consumo médio: <strong class="text-accent">até 10 m³/mês</strong></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Card 2: Casa Média -->
+                            <div class="residence-card" data-val="casa-media">
+                                <span class="check-badge"><i class="fa-solid fa-check"></i></span>
+                                <div class="residence-card-illustration">
+                                    <i class="fa-solid fa-house-user"></i>
+                                </div>
+                                <div class="residence-card-info">
+                                    <span class="card-residence-name"><i class="fa-solid fa-house-user" style="margin-right: 0.35rem;"></i> Casa Média</span>
+                                    <span class="card-residence-desc">Ideal para 3 a 4 moradores</span>
+                                    <span class="card-residence-consumption">Consumo médio: <strong class="text-accent">11–20 m³/mês</strong></span>
+                                </div>
+                            </div>
+
+                            <!-- Card 3: Casa Grande -->
+                            <div class="residence-card" data-val="casa-grande">
+                                <span class="check-badge"><i class="fa-solid fa-check"></i></span>
+                                <div class="residence-card-illustration">
+                                    <i class="fa-solid fa-people-roof"></i>
+                                </div>
+                                <div class="residence-card-info">
+                                    <span class="card-residence-name"><i class="fa-solid fa-people-roof" style="margin-right: 0.35rem;"></i> Casa Grande</span>
+                                    <span class="card-residence-desc">Ideal para 5+ moradores</span>
+                                    <span class="card-residence-consumption">Consumo médio: <strong class="text-accent">acima de 20 m³/mês</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seção Apartamentos -->
+                        <h4 class="card-grid-title" style="margin-top: 1.25rem;"><i class="fa-solid fa-building"></i> Apartamentos</h4>
+                        <div class="residence-cards-grid">
+                            <!-- Card 4: Apartamento Pequeno -->
+                            <div class="residence-card" data-val="apartamento-pequena">
+                                <span class="check-badge"><i class="fa-solid fa-check"></i></span>
+                                <div class="residence-card-illustration">
+                                    <i class="fa-solid fa-building-user"></i>
+                                </div>
+                                <div class="residence-card-info">
+                                    <span class="card-residence-name"><i class="fa-solid fa-building-user" style="margin-right: 0.35rem;"></i> Apartamento Pequeno</span>
+                                    <span class="card-residence-desc">Ideal para 1 a 2 moradores</span>
+                                    <span class="card-residence-consumption">Consumo médio: <strong class="text-accent">até 8 m³/mês</strong></span>
+                                </div>
+                            </div>
+
+                            <!-- Card 5: Apartamento Médio -->
+                            <div class="residence-card" data-val="apartamento-media">
+                                <span class="check-badge"><i class="fa-solid fa-check"></i></span>
+                                <div class="residence-card-illustration">
+                                    <i class="fa-solid fa-building"></i>
+                                </div>
+                                <div class="residence-card-info">
+                                    <span class="card-residence-name"><i class="fa-solid fa-building" style="margin-right: 0.35rem;"></i> Apartamento Médio</span>
+                                    <span class="card-residence-desc">Ideal para 3 a 4 moradores</span>
+                                    <span class="card-residence-consumption">Consumo médio: <strong class="text-accent">9–15 m³/mês</strong></span>
+                                </div>
+                            </div>
+
+                            <!-- Card 6: Apartamento Grande -->
+                            <div class="residence-card" data-val="apartamento-grande">
+                                <span class="check-badge"><i class="fa-solid fa-check"></i></span>
+                                <div class="residence-card-illustration">
+                                    <i class="fa-solid fa-city"></i>
+                                </div>
+                                <div class="residence-card-info">
+                                    <span class="card-residence-name"><i class="fa-solid fa-city" style="margin-right: 0.35rem;"></i> Apartamento Grande</span>
+                                    <span class="card-residence-desc">Ideal para 5+ moradores</span>
+                                    <span class="card-residence-consumption">Consumo médio: <strong class="text-accent">acima de 15 m³/mês</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Link Não Sabe Qual Escolher -->
+                        <div class="reference-link-wrapper">
+                            <button type="button" class="btn-text-link" id="btn-open-reference-modal">Não sabe qual escolher?</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-moradores"><i class="fa-solid fa-users"></i> Quantidade de moradores</label>
+                        <div class="counter-control">
+                            <button type="button" class="btn-counter" id="btn-moradores-dec"><i class="fa-solid fa-minus"></i></button>
+                            <input type="number" id="input-moradores" value="3" min="1" max="20" readonly>
+                            <button type="button" class="btn-counter" id="btn-moradores-inc"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-seedling"></i> Possui jardim?</label>
+                        <div class="toggle-group" id="group-jardim">
+                            <button type="button" class="toggle-btn" data-val="true">Sim</button>
+                            <button type="button" class="toggle-btn active" data-val="false">Não</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-person-swimming"></i> Possui piscina?</label>
+                        <div class="toggle-group" id="group-piscina">
+                            <button type="button" class="toggle-btn" data-val="true">Sim</button>
+                            <button type="button" class="toggle-btn active" data-val="false">Não</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large btn-block" id="btn-cadastro-submit" style="margin-top: 2rem;" disabled>
+                        Continuar <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== 4. DASHBOARD PRINCIPAL ==================== -->
+        <section id="screen-dashboard" class="screen hidden">
+            <header class="dashboard-header">
+                <div class="user-profile-info">
+                    <span class="user-greeting">Olá! Seu lar</span>
+                    <span class="user-residence-tag" id="dash-residence-summary">Casa, 3 pessoas</span>
+                </div>
+            </header>
+
+            <div class="scroll-content dashboard-content">
+                
+                <!-- Gota SVG Reativa Principal -->
+                <div class="droplet-interactive-wrapper">
+                    <svg viewBox="0 0 100 120" class="dynamic-droplet-svg">
+                        <defs>
+                            <linearGradient id="droplet-fill-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#00f2fe" />
+                                <stop offset="100%" stop-color="#4facfe" />
+                            </linearGradient>
+                            <clipPath id="droplet-clip">
+                                <path d="M50,15 C50,15 85,55 85,80 C85,99.3 69.3,115 50,115 C30.7,115 15,99.3 15,80 C15,55 50,15 50,15 Z" />
+                            </clipPath>
+                        </defs>
+                        <!-- Background da gota (cinza/azul escuro fosco) -->
+                        <path d="M50,15 C50,15 85,55 85,80 C85,99.3 69.3,115 50,115 C30.7,115 15,99.3 15,80 C15,55 50,15 50,15 Z" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2" />
+                        
+                        <!-- Preenchimento de água dinâmico -->
+                        <g clip-path="url(#droplet-clip)">
+                            <rect id="droplet-water-level" x="0" y="120" width="100" height="120" fill="url(#droplet-fill-grad)" transition="y 0.5s ease" />
+                            <!-- Ondas suaves -->
+                            <path class="wave-path" d="M 0 120 Q 25 115 50 120 T 100 120 L 100 240 L 0 240 Z" fill="url(#droplet-fill-grad)" opacity="0.6" />
+                        </g>
+                    </svg>
+                    <!-- Textos sobrepostos à gota -->
+                    <div class="droplet-text-overlay">
+                        <span class="droplet-percentage" id="dash-droplet-percentage">0%</span>
+                        <span class="droplet-label" id="dash-droplet-liters">0L / 500L</span>
+                        <span class="droplet-sub">de consumo adicional semanal</span>
+                    </div>
+                </div>
+
+                <!-- Feedback Inteligente (Banner Rápido) -->
+                <div class="card feedback-card" id="dash-feedback-card">
+                    <div class="feedback-icon-box positive"><i class="fa-solid fa-leaf"></i></div>
+                    <div class="feedback-text">
+                        <h4 id="dash-feedback-title">Tudo dentro do previsto!</h4>
+                        <p id="dash-feedback-desc">Seu consumo semanal está abaixo da meta estimada de economia.</p>
+                    </div>
+                </div>
+
+                <!-- Seção Acompanhamento Mensal -->
+                <div class="card monthly-tracking-card" style="margin-bottom: 1.5rem;">
+                    <div class="tracking-header">
+                        <div class="tracking-title-wrapper">
+                            <h3 class="tracking-title"><i class="fa-solid fa-calendar-days"></i> Acompanhamento Mensal</h3>
+                            <span class="timeline-indicator" id="tracking-timeline-label">Semana Atual: 1/4</span>
+                        </div>
+                        <div class="current-week-selector">
+                            <label for="select-current-week">Semana Ativa:</label>
+                            <select id="select-current-week" class="week-dropdown">
+                                <option value="1">Semana 1</option>
+                                <option value="2">Semana 2</option>
+                                <option value="3">Semana 3</option>
+                                <option value="4">Semana 4</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="weeks-container">
+                        <div class="week-card" data-week="1">
+                            <div class="week-card-status-dot"></div>
+                            <div class="week-card-info">
+                                <span class="week-name">Semana 1</span>
+                                <span class="week-liters" id="week-1-liters">0 L registrados</span>
+                                <span class="week-status" id="week-1-status">Nenhuma atividade registrada</span>
+                            </div>
+                            <div class="week-card-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                        </div>
+                        <div class="week-card" data-week="2">
+                            <div class="week-card-status-dot"></div>
+                            <div class="week-card-info">
+                                <span class="week-name">Semana 2</span>
+                                <span class="week-liters" id="week-2-liters">0 L registrados</span>
+                                <span class="week-status" id="week-2-status">Nenhuma atividade registrada</span>
+                            </div>
+                            <div class="week-card-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                        </div>
+                        <div class="week-card" data-week="3">
+                            <div class="week-card-status-dot"></div>
+                            <div class="week-card-info">
+                                <span class="week-name">Semana 3</span>
+                                <span class="week-liters" id="week-3-liters">0 L registrados</span>
+                                <span class="week-status" id="week-3-status">Nenhuma atividade registrada</span>
+                            </div>
+                            <div class="week-card-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                        </div>
+                        <div class="week-card" data-week="4">
+                            <div class="week-card-status-dot"></div>
+                            <div class="week-card-info">
+                                <span class="week-name">Semana 4</span>
+                                <span class="week-liters" id="week-4-liters">0 L registrados</span>
+                                <span class="week-status" id="week-4-status">Nenhuma atividade registrada</span>
+                            </div>
+                            <div class="week-card-arrow"><i class="fa-solid fa-chevron-right"></i></div>
+                        </div>
+                    </div>
+                    <!-- Botão de Finalizar Mês, visível apenas na Semana 4 quando não concluído -->
+                    <div class="finalize-action-container hidden" id="finalize-action-box" style="margin-top: 1.25rem; text-align: center; width: 100%;">
+                        <button type="button" class="btn btn-primary btn-large btn-block" id="btn-finalizar-mes">
+                            <i class="fa-solid fa-circle-check"></i> Finalizar Mês e Gerar Resumo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card Próximo Passo (Visível após conclusão, antes de registrar a conta real) -->
+                <div class="card next-step-card hidden" id="dash-proximo-passo" style="margin-bottom: 1.5rem; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.2);">
+                    <h3 style="color: #f59e0b; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-lightbulb"></i> Próximo Passo</h3>
+                    <p style="margin-top: 0.5rem; font-size: 0.95rem; line-height: 1.4; color: var(--text-light);">Você concluiu o acompanhamento mensal. Agora registre sua conta real de água para comparar a estimativa com o consumo efetivo da residência.</p>
+                    <button type="button" class="btn btn-primary btn-large btn-block btn-highlight-pulse" id="btn-next-step-conta" style="margin-top: 1rem;">
+                        <i class="fa-solid fa-receipt"></i> Registrar Conta Real
+                    </button>
+                </div>
+
+                <!-- Cards Grid -->
+                <div class="metrics-grid">
+                    
+                    <!-- Card Fórmula do Consumo Total (Visualmente Evidente) -->
+                    <div class="card formula-card col-span-2">
+                        <div class="formula-container">
+                            <div class="formula-part">
+                                <span class="formula-label">Consumo Base</span>
+                                <span class="formula-val" id="dash-formula-base">0 L</span>
+                            </div>
+                            <div class="formula-operator"><i class="fa-solid fa-plus"></i></div>
+                            <div class="formula-part">
+                                <span class="formula-label">Atividades</span>
+                                <span class="formula-val" id="dash-formula-adicional">0 L</span>
+                            </div>
+                            <div class="formula-operator"><i class="fa-solid fa-equals"></i></div>
+                            <div class="formula-part highlight">
+                                <span class="formula-label">Consumo Total</span>
+                                <span class="formula-val" id="dash-formula-total">0 L</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Consumo Base (Mês) -->
+                    <div class="card metric-card">
+                        <div class="card-icon"><i class="fa-solid fa-house-water"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-title"><i class="fa-solid fa-faucet" style="margin-right: 0.35rem; color: var(--primary);"></i> Consumo Base (Mês)</span>
+                            <span class="metric-value" id="dash-consumo-base-card">0 L</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Consumo Adicional (Mês) -->
+                    <div class="card metric-card">
+                        <div class="card-icon extra-icon"><i class="fa-solid fa-faucet-drip"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-title"><i class="fa-solid fa-droplet" style="margin-right: 0.35rem; color: var(--primary-dark);"></i> Consumo Adicional</span>
+                            <span class="metric-value" id="dash-consumo-adicional-card">0 L</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Consumo Total Estimado (Mês) -->
+                    <div class="card metric-card">
+                        <div class="card-icon"><i class="fa-solid fa-droplet"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-title font-bold"><i class="fa-solid fa-chart-simple" style="margin-right: 0.35rem; color: var(--accent);"></i> Consumo Total Est.</span>
+                            <span class="metric-value text-accent" id="dash-consumo-total-card">0 L</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Valor Estimado Conta (Mês) -->
+                    <div class="card metric-card">
+                        <div class="card-icon finance"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-title"><i class="fa-solid fa-circle-dollar-to-slot" style="margin-right: 0.35rem; color: var(--success);"></i> Valor Est. da Conta</span>
+                            <span class="metric-value text-success" id="dash-valor-estimado-card">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Consumo por Pessoa (Dia) -->
+                    <div class="card metric-card col-span-2">
+                        <div class="card-icon user-icon"><i class="fa-solid fa-user"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-title"><i class="fa-solid fa-user-group" style="margin-right: 0.35rem; color: var(--primary);"></i> Consumo Médio por Pessoa</span>
+                            <span class="metric-value" id="dash-consumo-pessoa-card">120 L/dia</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Status da Meta -->
+                    <div class="card metric-card col-span-2" id="dash-status-meta-card">
+                        <div class="card-icon"><i class="fa-solid fa-bullseye"></i></div>
+                        <div class="metric-data">
+                            <span class="metric-title"><i class="fa-solid fa-bullseye" style="margin-right: 0.35rem; color: var(--accent);"></i> Status da Meta</span>
+                            <span class="metric-value text-success" id="dash-status-meta-value"><i class="fa-solid fa-circle-check" style="margin-right: 0.35rem;"></i> Dentro da Meta</span>
+                            <span class="metric-desc" id="dash-status-meta-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Seu consumo adicional permaneceu dentro da meta mensal estabelecida.</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Comparação com Conta Real -->
+                    <div class="card metric-card col-span-2" id="dash-comparativo-card">
+                        <div class="card-icon comp-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                        <div class="metric-data" style="width: 100%;">
+                            <span class="metric-title">Comparação Real vs Estimado</span>
+                            <div class="metric-desc" id="dash-comparativo-texto">Ainda não há dados suficientes para comparação.</div>
+                            <div id="dash-comparativo-detalhado" class="comparison-report-box hidden" style="margin-top: 1rem; width: 100%;">
+                                <!-- Renderizado via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão Flutuante de Ação Rápida (FAB) -->
+            <button class="fab-btn" id="fab-add-atividade" title="Registrar Atividade">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+
+            <!-- Menu de Navegação Inferior -->
+            <nav class="bottom-nav">
+                <button class="nav-item active" data-nav="dashboard">
+                    <i class="fa-solid fa-house-chimney"></i>
+                    <span>Início</span>
+                </button>
+                <button class="nav-item" data-nav="simulador">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Simular</span>
+                </button>
+                <button class="nav-item" data-nav="historico">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Relatórios</span>
+                </button>
+                <button class="nav-item" data-nav="configuracoes">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Ajustes</span>
+                </button>
+            </nav>
+        </section>
+
+        <!-- ==================== 5. REGISTRO SEMANAL DE ATIVIDADES ==================== -->
+        <section id="screen-registro-semanal" class="screen hidden">
+            <div class="screen-header">
+                <button class="btn-back" id="btn-registro-back"><i class="fa-solid fa-chevron-left"></i></button>
+                <h2>Registrar Atividade</h2>
+            </div>
+
+            <div class="scroll-content">
+                <p class="section-intro">Selecione uma atividade para registrar o consumo extra correspondente.</p>
+                
+                <div class="activities-grid">
+                    <!-- Atividade: Banho Longo -->
+                    <button class="activity-option" data-activity="banho">
+                        <div class="activity-icon"><i class="fa-solid fa-shower"></i></div>
+                        <span class="activity-name">Banho Longo (>15min)</span>
+                        <span class="activity-cost-badge">~180 Litros</span>
+                    </button>
+
+                    <!-- Atividade: Lavar Roupa -->
+                    <button class="activity-option" data-activity="roupa">
+                        <div class="activity-icon"><i class="fa-solid fa-soap"></i></div>
+                        <span class="activity-name">Lavar Roupa (Máquina)</span>
+                        <span class="activity-cost-badge">~120 Litros</span>
+                    </button>
+
+                    <!-- Atividade: Lavar Carro -->
+                    <button class="activity-option" data-activity="carro">
+                        <div class="activity-icon"><i class="fa-solid fa-car"></i></div>
+                        <span class="activity-name">Lavar Carro (Mangueira)</span>
+                        <span class="activity-cost-badge">~220 Litros</span>
+                    </button>
+
+                    <!-- Atividade: Regar Jardim -->
+                    <button class="activity-option" data-activity="jardim">
+                        <div class="activity-icon"><i class="fa-solid fa-seedling"></i></div>
+                        <span class="activity-name">Regar Jardim (Mangueira)</span>
+                        <span class="activity-cost-badge">~150 Litros</span>
+                    </button>
+
+                    <!-- Atividade: Lavar Calçada -->
+                    <button class="activity-option" data-activity="calcada">
+                        <div class="activity-icon"><i class="fa-solid fa-broom"></i></div>
+                        <span class="activity-name">Lavar Calçada</span>
+                        <span class="activity-cost-badge">~100 Litros</span>
+                    </button>
+
+                    <!-- Atividade: Encher Piscina -->
+                    <button class="activity-option" data-activity="piscina">
+                        <div class="activity-icon"><i class="fa-solid fa-water"></i></div>
+                        <span class="activity-name">Encher Piscina (Ajuste)</span>
+                        <span class="activity-cost-badge">~1000 Litros</span>
+                    </button>
+                </div>
+
+                <!-- Preview de Impacto antes de Confirmar -->
+                <div class="card impact-preview-card hidden" id="activity-preview-panel">
+                    <h3 class="impact-title"><i class="fa-solid fa-gauge-high"></i> Impacto Estimado</h3>
+                    <div class="impact-stats">
+                        <div class="impact-stat">
+                            <span class="stat-label">Litros Adicionais</span>
+                            <span class="stat-value" id="preview-litros">+0 L</span>
+                        </div>
+                        <div class="impact-stat">
+                            <span class="stat-label">Custo na Conta</span>
+                            <span class="stat-value text-warning" id="preview-custo">+R$ 0,00</span>
+                        </div>
+                    </div>
+                    <div class="action-row">
+                        <button class="btn btn-primary" id="btn-confirmar-atividade">Confirmar Registro</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 6. REGISTRO DA CONTA REAL ==================== -->
+        <section id="screen-conta-real" class="screen hidden">
+            <div class="screen-header">
+                <button class="btn-back" id="btn-conta-back"><i class="fa-solid fa-chevron-left"></i></button>
+                <h2>Registrar Conta Real</h2>
+            </div>
+
+            <div class="scroll-content">
+                <p class="section-intro">Insira os dados da sua fatura mensal de água para calibrar nosso modelo de estimativa e receber feedbacks reais.</p>
+                
+                <form id="form-conta-real" class="form-container">
+                    <div class="form-group">
+                        <label for="input-conta-consumo"><i class="fa-solid fa-gauge"></i> Consumo Real (m³)</label>
+                        <input type="number" id="input-conta-consumo" step="0.1" placeholder="Ex: 15.5" required>
+                        <p class="input-tip">1 m³ equivale a 1.000 litros.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-conta-valor"><i class="fa-solid fa-dollar-sign"></i> Valor Pago (R$)</label>
+                        <input type="number" id="input-conta-valor" step="0.01" placeholder="Ex: 110.50" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-conta-mes"><i class="fa-solid fa-calendar-days"></i> Mês de Referência</label>
+                        <select id="input-conta-mes" required>
+                            <option value="Janeiro">Janeiro</option>
+                            <option value="Fevereiro">Fevereiro</option>
+                            <option value="Março">Março</option>
+                            <option value="Abril">Abril</option>
+                            <option value="Maio">Maio</option>
+                            <option value="Junho">Junho</option>
+                            <option value="Julho">Julho</option>
+                            <option value="Agosto">Agosto</option>
+                            <option value="Setembro">Setembro</option>
+                            <option value="Outubro">Outubro</option>
+                            <option value="Novembro">Novembro</option>
+                            <option value="Dezembro">Dezembro</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large btn-block" style="margin-top: 2rem;">
+                        Salvar Conta <i class="fa-solid fa-floppy-disk"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== 7. SIMULADOR DE ECONOMIA ==================== -->
+        <section id="screen-simulador" class="screen hidden">
+            <div class="screen-header">
+                <h2>Simulador de Economia</h2>
+            </div>
+
+            <div class="scroll-content tab-content-padding">
+                <p class="section-intro">Seus hábitos atuais foram carregados automaticamente. Ajuste os controles abaixo para descobrir quanto você pode economizar em água e dinheiro caso mude sua rotina.</p>
+
+                <!-- Painel de Resultados Rápidos -->
+                <div class="card simulator-results-card">
+                    <h3 class="results-title"><i class="fa-solid fa-piggy-bank"></i> Economia Estimada (Mensal)</h3>
+                    <div class="results-stats">
+                        <div class="result-stat">
+                            <span class="stat-label">Água Salva</span>
+                            <span class="stat-value text-accent" id="sim-economia-litros">0 Litros</span>
+                        </div>
+                        <div class="result-stat">
+                            <span class="stat-label">Dinheiro Poupado</span>
+                            <span class="stat-value text-success" id="sim-economia-financeira">R$ 0,00</span>
+                        </div>
+                        <div class="result-stat">
+                            <span class="stat-label">Redução</span>
+                            <span class="stat-value text-warning" id="sim-economia-percentual">0%</span>
+                        </div>
+                    </div>
+                    <div class="new-totals-tag">
+                        Nova conta estimada: <strong id="sim-nova-conta">R$ 0,00</strong>
+                    </div>
+                    <!-- Mensagem discreta de feedback ou instrução inicial -->
+                    <p class="simulator-feedback-msg" id="sim-feedback-msg">Altere um ou mais hábitos para visualizar sua economia potencial.</p>
+                </div>
+
+                <!-- Estado sem registros no Simulador -->
+                <div id="sim-empty-state" class="card empty-state-card hidden" style="margin-bottom: 1.5rem; padding: 2rem 1.25rem;">
+                    <i class="fa-solid fa-circle-exclamation" style="font-size: 2.2rem; color: var(--warning); margin-bottom: 0.75rem; opacity: 0.9;"></i>
+                    <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-white); margin-bottom: 0.35rem; line-height: 1.4;">Você ainda não registrou atividades nesta semana.</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.45;">Cadastre suas atividades no Registro Semanal para utilizar o simulador de economia.</p>
+                    <button class="btn btn-primary btn-large btn-block" id="btn-sim-go-register">
+                        Registrar Atividade <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <!-- Sliders de Controle -->
+                <div class="sliders-list">
+                    <!-- Slider 1: Banhos Longos -->
+                    <div class="card slider-card">
+                        <div class="slider-header">
+                            <span class="slider-name"><i class="fa-solid fa-shower"></i> Banhos Longos (Semana)</span>
+                            <span class="slider-badge" id="badge-sim-banho">0x</span>
+                        </div>
+                        <input type="range" class="range-slider" id="slider-sim-banho" min="0" max="15" value="0">
+                        <span class="slider-desc">Banhos com duração acima de 15 minutos.</span>
+                        
+                        <!-- Comparação de cenários (IHC) -->
+                        <div class="slider-comparison" id="comp-sim-banho">
+                            <span class="comp-label">Atual: <strong id="comp-sim-banho-atual">0x</strong></span>
+                            <span class="comp-label">Novo: <strong id="comp-sim-banho-novo">0x</strong></span>
+                            <span class="comp-economy" id="comp-sim-banho-economia">Economia: ≈ 0 L/mês</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider 2: Lavagem de Carro -->
+                    <div class="card slider-card">
+                        <div class="slider-header">
+                            <span class="slider-name"><i class="fa-solid fa-car"></i> Lavar Carro (Mês)</span>
+                            <span class="slider-badge" id="badge-sim-carro">0x</span>
+                        </div>
+                        <input type="range" class="range-slider" id="slider-sim-carro" min="0" max="8" value="0">
+                        <span class="slider-desc">Lavagem de carro utilizando mangueira convencional.</span>
+                        
+                        <!-- Comparação de cenários (IHC) -->
+                        <div class="slider-comparison" id="comp-sim-carro">
+                            <span class="comp-label">Atual: <strong id="comp-sim-carro-atual">0x</strong></span>
+                            <span class="comp-label">Novo: <strong id="comp-sim-carro-novo">0x</strong></span>
+                            <span class="comp-economy" id="comp-sim-carro-economia">Economia: ≈ 0 L/mês</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider 3: Irrigação do Jardim -->
+                    <div class="card slider-card" id="sim-card-jardim">
+                        <div class="slider-header">
+                            <span class="slider-name"><i class="fa-solid fa-seedling"></i> Regar Jardim (Semana)</span>
+                            <span class="slider-badge" id="badge-sim-jardim">0x</span>
+                        </div>
+                        <input type="range" class="range-slider" id="slider-sim-jardim" min="0" max="10" value="0">
+                        <span class="slider-desc">Uso de mangueira para molhar plantas e gramados.</span>
+                        
+                        <!-- Comparação de cenários (IHC) -->
+                        <div class="slider-comparison" id="comp-sim-jardim">
+                            <span class="comp-label">Atual: <strong id="comp-sim-jardim-atual">0x</strong></span>
+                            <span class="comp-label">Novo: <strong id="comp-sim-jardim-novo">0x</strong></span>
+                            <span class="comp-economy" id="comp-sim-jardim-economia">Economia: ≈ 0 L/mês</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dica do AquaConsciente -->
+                <div class="card tip-card" style="margin-top: 1.5rem;" id="sim-tip-box">
+                    <h3 class="tip-title"><i class="fa-solid fa-lightbulb"></i> Dica do AquaConsciente</h3>
+                    <p class="tip-desc" id="sim-tip-desc">Seus hábitos estão equilibrados! Ajuste os sliders para identificar oportunidades de poupar mais água.</p>
+                </div>
+            </div>
+
+            <!-- Menu de Navegação Inferior -->
+            <nav class="bottom-nav">
+                <button class="nav-item" data-nav="dashboard">
+                    <i class="fa-solid fa-house-chimney"></i>
+                    <span>Início</span>
+                </button>
+                <button class="nav-item active" data-nav="simulador">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Simular</span>
+                </button>
+                <button class="nav-item" data-nav="historico">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Relatórios</span>
+                </button>
+                <button class="nav-item" data-nav="configuracoes">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Ajustes</span>
+                </button>
+            </nav>
+        </section>
+
+        <!-- ==================== 8. HISTÓRICO E RELATÓRIOS ==================== -->
+        <section id="screen-historico" class="screen hidden">
+            <div class="screen-header">
+                <h2>Histórico e Relatórios</h2>
+            </div>
+
+            <div class="scroll-content tab-content-padding">
+                <p class="section-intro">Acompanhe seu histórico de consumo comparando previsões, metas e faturas reais cadastradas.</p>
+                
+                <!-- Gráfico SVG Dinâmico -->
+                <div class="card chart-card">
+                    <h3>Consumo Mensal (Previsto vs Real)</h3>
+                    <div class="chart-container" id="chart-container">
+                        <!-- Será preenchido via JS com um gráfico SVG Responsivo -->
+                    </div>
+                    <div class="chart-legend">
+                        <span class="legend-item"><span class="legend-dot previsto"></span> Previsto</span>
+                        <span class="legend-item"><span class="legend-dot real"></span> Real</span>
+                        <span class="legend-item"><span class="legend-dot meta"></span> Meta de Economia</span>
+                    </div>
+                </div>
+
+                <!-- Comparativo de Desempenho entre Meses -->
+                <div class="card comparacao-meses-card hidden" id="card-comparacao-meses" style="margin-bottom: 1.5rem;">
+                    <h3><i class="fa-solid fa-scale-balanced"></i> Comparativo de Desempenho</h3>
+                    <p id="comparacao-meses-texto" style="font-size: 0.95rem; line-height: 1.45; color: var(--text-light); margin-top: 0.5rem;"></p>
+                </div>
+
+                <!-- Histórico de Contas Cadastradas -->
+                <div class="history-list-section">
+                    <h3>Contas Registradas</h3>
+                    <div class="history-list" id="container-contas-registradas">
+                        <!-- Mensagem vazia padrão ou lista de contas -->
+                        <div class="empty-state-card">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <p>Nenhuma conta real registrada ainda.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu de Navegação Inferior -->
+            <nav class="bottom-nav">
+                <button class="nav-item" data-nav="dashboard">
+                    <i class="fa-solid fa-house-chimney"></i>
+                    <span>Início</span>
+                </button>
+                <button class="nav-item" data-nav="simulador">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Simular</span>
+                </button>
+                <button class="nav-item active" data-nav="historico">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Relatórios</span>
+                </button>
+                <button class="nav-item" data-nav="configuracoes">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Ajustes</span>
+                </button>
+            </nav>
+        </section>
+
+        <!-- ==================== 9. PERFIL E CONFIGURAÇÕES ==================== -->
+        <section id="screen-configuracoes" class="screen hidden">
+            <div class="screen-header">
+                <h2>Configurações e Ajustes</h2>
+            </div>
+
+            <div class="scroll-content tab-content-padding">
+                <form id="form-configuracoes" class="form-container">
+                    
+                    <div class="card config-card">
+                        <h3><i class="fa-solid fa-sliders"></i> Parâmetros de Economia</h3>
+                        
+                        <div class="form-group config-group">
+                            <label for="input-config-meta">Meta de Economia (%)</label>
+                            <div class="input-with-suffix">
+                                <input type="number" id="input-config-meta" min="0" max="50" value="15">
+                                <span class="suffix">%</span>
+                            </div>
+                            <span class="input-tip">Percentual de economia ideal recomendado (entre 5% e 30%).</span>
+                        </div>
+
+                        <div class="form-group config-group">
+                            <label for="input-config-tarifa">Tarifa da Água (R$ por m³)</label>
+                            <div class="input-with-prefix">
+                                <span class="prefix">R$</span>
+                                <input type="number" id="input-config-tarifa" step="0.01" value="8.50">
+                            </div>
+                            <span class="input-tip">Valor cobrado pela distribuidora da sua região.</span>
+                        </div>
+                    </div>
+
+                    <div class="card config-card" style="margin-top: 1.5rem;">
+                        <h3><i class="fa-solid fa-house-user"></i> Alterar Dados do Lar</h3>
+                        <p class="card-desc">Modifique os dados do seu cadastro inicial.</p>
+                        <button type="button" class="btn btn-secondary btn-block" id="btn-config-edit-lar">
+                            Editar Dados da Residência <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                    </div>
+
+                    <div class="danger-zone" style="margin-top: 2rem;">
+                        <button type="button" class="btn btn-danger btn-block" id="btn-config-reset">
+                            Limpar Todos os Dados <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                        <p class="danger-tip">Isso apagará permanentemente todo o histórico e dados locais cadastrados.</p>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large btn-block" style="margin-top: 2rem; margin-bottom: 2rem;">
+                        Salvar Alterações <i class="fa-solid fa-circle-check"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Menu de Navegação Inferior -->
+            <nav class="bottom-nav">
+                <button class="nav-item" data-nav="dashboard">
+                    <i class="fa-solid fa-house-chimney"></i>
+                    <span>Início</span>
+                </button>
+                <button class="nav-item" data-nav="simulador">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Simular</span>
+                </button>
+                <button class="nav-item" data-nav="historico">
+                    <i class="fa-solid fa-chart-column"></i>
+                    <span>Relatórios</span>
+                </button>
+                <button class="nav-item active" data-nav="configuracoes">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Ajustes</span>
+                </button>
+            </nav>
+        </section>
+
+        <!-- Modal: Não sabe qual escolher? -->
+        <div id="modal-reference-info" class="modal-overlay hidden">
+            <div class="modal-card card">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-circle-info"></i> Consumo de Referência</h3>
+                    <button type="button" class="btn-close-modal" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <p>Os tipos de residência e faixas de consumo exibidos são apenas uma <strong>referência inicial</strong> para estimar o consumo de base da sua residência.</p>
+                    <p>Não se preocupe em escolher a opção perfeita! A estimativa da aplicação será refinada e calibrada automaticamente à medida que você:</p>
+                    <ul>
+                        <li><i class="fa-solid fa-users"></i> Informar o número exato de moradores.</li>
+                        <li><i class="fa-solid fa-circle-check"></i> Registrar suas atividades semanais.</li>
+                        <li><i class="fa-solid fa-receipt"></i> Cadastrar a sua conta de água real.</li>
+                    </ul>
+                    <p class="modal-tip">Escolha o tipo que mais se aproxima do tamanho físico do seu lar para começar.</p>
+                </div>
+                <button type="button" class="btn btn-primary btn-block" id="btn-close-modal-ok">Entendido</button>
+            </div>
+        </div>
+
+        <!-- Modal: Detalhes da Semana -->
+        <div id="modal-week-details" class="modal-overlay hidden">
+            <div class="modal-card card">
+                <div class="modal-header">
+                    <h3 id="modal-week-title"><i class="fa-solid fa-calendar-week"></i> Semana 1</h3>
+                    <button type="button" class="btn-close-modal" id="btn-close-week-modal"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-white); font-weight: 600;">Atividades Registradas</h4>
+                    <div id="modal-week-activities-list" class="week-activities-list">
+                        <!-- Preenchido via JS -->
+                    </div>
+                    
+                    <div class="week-summary-block" style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08);">
+                        <div class="summary-row" style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem;">
+                            <span style="color: var(--text-muted);">Consumo Total:</span>
+                            <strong id="modal-week-total-liters" style="color: var(--text-white);">0 Litros</strong>
+                        </div>
+                        <div class="summary-row" style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem;">
+                            <span style="color: var(--text-muted);">Meta Semanal:</span>
+                            <strong id="modal-week-meta-liters" style="color: var(--text-white);">500 Litros</strong>
+                        </div>
+                        <div class="summary-row" style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                            <span style="color: var(--text-muted);">Status da Meta:</span>
+                            <span id="modal-week-meta-status" class="status-badge">Meta respeitada</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary btn-block" id="btn-close-week-modal-ok">Entendido</button>
+            </div>
+        </div>
+
+        <!-- Modal: Confirmar Novo Mês -->
+        <div id="modal-confirm-new-month" class="modal-overlay hidden">
+            <div class="modal-card card">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-circle-question"></i> Novo Acompanhamento</h3>
+                    <button type="button" class="btn-close-modal" id="btn-close-confirm-modal"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <p>Deseja iniciar um novo ciclo mensal de acompanhamento?</p>
+                    <p><strong>Esta ação irá:</strong></p>
+                    <ul>
+                        <li><i class="fa-solid fa-calendar-check"></i> Iniciar o registro da Semana 1 do próximo mês.</li>
+                        <li><i class="fa-solid fa-trash-can"></i> Limpar os logs semanais ativos do mês atual.</li>
+                        <li><i class="fa-solid fa-droplet"></i> Reiniciar o nível da gota de consumo adicional.</li>
+                    </ul>
+                    <p class="modal-tip">Os dados consolidados do mês atual serão arquivados permanentemente no seu Histórico.</p>
+                </div>
+                <div class="modal-buttons" style="display: flex; gap: 0.75rem;">
+                    <button type="button" class="btn btn-secondary btn-block" id="btn-confirm-new-month-cancel" style="margin: 0;">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-block" id="btn-confirm-new-month-ok" style="margin: 0;">Iniciar</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Script File -->
+    <script src="app.js?v=4"></script>
+</body>
+</html>
