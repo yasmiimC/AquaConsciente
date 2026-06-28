@@ -11,7 +11,7 @@
     <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=11">
+    <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
     <div class="app-container">
@@ -298,7 +298,7 @@
                     <div class="droplet-text-overlay">
                         <span class="droplet-percentage" id="dash-droplet-percentage">0%</span>
                         <span class="droplet-label" id="dash-droplet-liters">0L / 500L</span>
-                        <span class="droplet-sub">de consumo adicional semanal</span>
+                        <span class="droplet-sub">de consumo<br>adicional semanal</span>
                     </div>
                 </div>
 
@@ -476,6 +476,12 @@
                 </div>
             </div>
 
+            <!-- Indicador de Rolagem (Bounce Scroll) -->
+            <div id="scroll-indicator" class="scroll-indicator fade-out">
+                <span>Role para ver mais</span>
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+
             <!-- Botão Flutuante de Ação Rápida (FAB) -->
             <button class="fab-btn" id="fab-add-atividade" title="Registrar Atividade">
                 <i class="fa-solid fa-plus"></i>
@@ -573,6 +579,10 @@
                         <button class="btn btn-primary" id="btn-confirmar-atividade">Confirmar Registro</button>
                     </div>
                 </div>
+            <!-- Indicador de Rolagem (Bounce Scroll) para Registro -->
+            <div id="scroll-indicator-registro" class="scroll-indicator fade-out">
+                <span>Role para ver mais</span>
+                <i class="fa-solid fa-chevron-down"></i>
             </div>
         </section>
 
@@ -1029,6 +1039,6 @@
     </div>
 
     <!-- Script File -->
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=14"></script>
 </body>
 </html>
