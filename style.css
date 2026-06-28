@@ -1250,48 +1250,48 @@ body {
 
 /* --- 8. HISTÓRICO E GRÁFICOS --- */
 .chart-card h3 {
-    font-size: 0.95rem;
+    font-size: 1.2rem;
     font-weight: 700;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
+    color: var(--text-light);
 }
 
 .chart-container {
-    height: 180px;
+    height: 380px !important;
     width: 100%;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-around;
-    padding-top: 1rem;
+    display: block !important;
+    padding-top: 1.5rem;
     position: relative;
 }
 
 .chart-legend {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1.25rem;
-    font-size: 0.75rem;
-    color: var(--text-muted);
+    display: flex !important;
+    justify-content: center !important;
+    gap: 2rem !important;
+    margin-top: 1.5rem !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: var(--text-light) !important;
 }
 
 .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.6rem !important;
 }
 
 .legend-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+    width: 14px !important;
+    height: 14px !important;
+    border-radius: 50% !important;
 }
 
 .legend-dot.previsto {
-    background-color: var(--primary-dark);
+    background-color: #2563EB;
 }
 
 .legend-dot.real {
-    background-color: var(--primary);
+    background-color: #16A34A;
 }
 
 .legend-dot.meta {
@@ -2220,6 +2220,64 @@ select option,
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 0.5rem;
+}
+
+/* Cartões Informativos Resumo no Relatório (IHD: Contraste e Legibilidade) */
+.report-summary-cards {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.5rem !important;
+    margin-bottom: 2rem !important;
+    margin-top: 1rem !important;
+}
+
+.report-summary-cards .summary-card {
+    padding: 1.75rem 1.5rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 12px !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.report-summary-cards .summary-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35) !important;
+}
+
+.report-summary-cards .summary-card .card-title-lbl {
+    font-size: 0.95rem !important;
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.report-summary-cards .summary-card .card-val-lbl {
+    font-size: 2.2rem !important;
+    color: var(--text-white) !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    margin-top: 0.25rem !important;
+}
+
+@media (max-width: 580px) {
+    .report-summary-cards {
+        grid-template-columns: 1fr !important;
+        gap: 1.25rem !important;
+    }
+    .report-summary-cards .summary-card {
+        padding: 1.5rem 1.25rem !important;
+    }
+    .report-summary-cards .summary-card .card-val-lbl {
+        font-size: 1.9rem !important;
+    }
 }
 
 
