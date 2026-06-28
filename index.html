@@ -11,7 +11,7 @@
     <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
     <div class="app-container">
@@ -409,9 +409,9 @@
                     
                     <!-- Card Consumo Base (Mês) -->
                     <div class="card metric-card">
-                        <div class="card-icon"><i class="fa-solid fa-house-water"></i></div>
+                        <div class="card-icon"><i class="fa-solid fa-house"></i></div>
                         <div class="metric-data">
-                            <span class="metric-title"><i class="fa-solid fa-faucet" style="margin-right: 0.35rem; color: var(--primary);"></i> Consumo Base (Mês)</span>
+                            <span class="metric-title">Consumo Base (Mês)</span>
                             <span class="metric-value" id="dash-consumo-base-card">0 L</span>
                         </div>
                     </div>
@@ -420,7 +420,7 @@
                     <div class="card metric-card">
                         <div class="card-icon extra-icon"><i class="fa-solid fa-faucet-drip"></i></div>
                         <div class="metric-data">
-                            <span class="metric-title"><i class="fa-solid fa-droplet" style="margin-right: 0.35rem; color: var(--primary-dark);"></i> Consumo Adicional</span>
+                            <span class="metric-title">Consumo Adicional</span>
                             <span class="metric-value" id="dash-consumo-adicional-card">0 L</span>
                         </div>
                     </div>
@@ -429,7 +429,7 @@
                     <div class="card metric-card">
                         <div class="card-icon"><i class="fa-solid fa-droplet"></i></div>
                         <div class="metric-data">
-                            <span class="metric-title font-bold"><i class="fa-solid fa-chart-simple" style="margin-right: 0.35rem; color: var(--accent);"></i> Consumo Total Est.</span>
+                            <span class="metric-title font-bold">Consumo Total Est.</span>
                             <span class="metric-value text-accent" id="dash-consumo-total-card">0 L</span>
                         </div>
                     </div>
@@ -438,7 +438,7 @@
                     <div class="card metric-card">
                         <div class="card-icon finance"><i class="fa-solid fa-hand-holding-dollar"></i></div>
                         <div class="metric-data">
-                            <span class="metric-title"><i class="fa-solid fa-circle-dollar-to-slot" style="margin-right: 0.35rem; color: var(--success);"></i> Valor Est. da Conta</span>
+                            <span class="metric-title">Valor Est. da Conta</span>
                             <span class="metric-value text-success" id="dash-valor-estimado-card">R$ 0,00</span>
                         </div>
                     </div>
@@ -447,7 +447,7 @@
                     <div class="card metric-card col-span-2">
                         <div class="card-icon user-icon"><i class="fa-solid fa-user"></i></div>
                         <div class="metric-data">
-                            <span class="metric-title"><i class="fa-solid fa-user-group" style="margin-right: 0.35rem; color: var(--primary);"></i> Consumo Médio por Pessoa</span>
+                            <span class="metric-title">Consumo Médio por Pessoa</span>
                             <span class="metric-value" id="dash-consumo-pessoa-card">120 L/dia</span>
                         </div>
                     </div>
@@ -456,7 +456,7 @@
                     <div class="card metric-card col-span-2" id="dash-status-meta-card">
                         <div class="card-icon"><i class="fa-solid fa-bullseye"></i></div>
                         <div class="metric-data">
-                            <span class="metric-title"><i class="fa-solid fa-bullseye" style="margin-right: 0.35rem; color: var(--accent);"></i> Status da Meta</span>
+                            <span class="metric-title">Status da Meta</span>
                             <span class="metric-value text-success" id="dash-status-meta-value"><i class="fa-solid fa-circle-check" style="margin-right: 0.35rem;"></i> Dentro da Meta</span>
                             <span class="metric-desc" id="dash-status-meta-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Seu consumo adicional permaneceu dentro da meta mensal estabelecida.</span>
                         </div>
@@ -671,7 +671,7 @@
                     <!-- Slider 1: Banhos Longos -->
                     <div class="card slider-card">
                         <div class="slider-header">
-                            <span class="slider-name"><i class="fa-solid fa-shower"></i> Banhos Longos (Semana)</span>
+                            <span class="slider-name"><i class="fa-solid fa-shower"></i> Banhos Longos (Mês)</span>
                             <span class="slider-badge" id="badge-sim-banho">0x</span>
                         </div>
                         <input type="range" class="range-slider" id="slider-sim-banho" min="0" max="15" value="0">
@@ -705,7 +705,7 @@
                     <!-- Slider 3: Irrigação do Jardim -->
                     <div class="card slider-card" id="sim-card-jardim">
                         <div class="slider-header">
-                            <span class="slider-name"><i class="fa-solid fa-seedling"></i> Regar Jardim (Semana)</span>
+                            <span class="slider-name"><i class="fa-solid fa-seedling"></i> Regar Jardim (Mês)</span>
                             <span class="slider-badge" id="badge-sim-jardim">0x</span>
                         </div>
                         <input type="range" class="range-slider" id="slider-sim-jardim" min="0" max="10" value="0">
@@ -716,6 +716,57 @@
                             <span class="comp-label">Atual: <strong id="comp-sim-jardim-atual">0x</strong></span>
                             <span class="comp-label">Novo: <strong id="comp-sim-jardim-novo">0x</strong></span>
                             <span class="comp-economy" id="comp-sim-jardim-economia">Economia: ≈ 0 L/mês</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider 4: Lavar Roupa -->
+                    <div class="card slider-card" id="sim-card-roupa">
+                        <div class="slider-header">
+                            <span class="slider-name"><i class="fa-solid fa-shirt"></i> Lavar Roupa (Mês)</span>
+                            <span class="slider-badge" id="badge-sim-roupa">0x</span>
+                        </div>
+                        <input type="range" class="range-slider" id="slider-sim-roupa" min="0" max="10" value="0">
+                        <span class="slider-desc">Uso de máquina de lavar roupas.</span>
+                        
+                        <!-- Comparação de cenários (IHC) -->
+                        <div class="slider-comparison" id="comp-sim-roupa">
+                            <span class="comp-label">Atual: <strong id="comp-sim-roupa-atual">0x</strong></span>
+                            <span class="comp-label">Novo: <strong id="comp-sim-roupa-novo">0x</strong></span>
+                            <span class="comp-economy" id="comp-sim-roupa-economia">Economia: ≈ 0 L/mês</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider 5: Lavar Calçada -->
+                    <div class="card slider-card" id="sim-card-calcada">
+                        <div class="slider-header">
+                            <span class="slider-name"><i class="fa-solid fa-broom"></i> Lavar Calçada (Mês)</span>
+                            <span class="slider-badge" id="badge-sim-calcada">0x</span>
+                        </div>
+                        <input type="range" class="range-slider" id="slider-sim-calcada" min="0" max="10" value="0">
+                        <span class="slider-desc">Limpeza de calçada ou quintal com mangueira.</span>
+                        
+                        <!-- Comparação de cenários (IHC) -->
+                        <div class="slider-comparison" id="comp-sim-calcada">
+                            <span class="comp-label">Atual: <strong id="comp-sim-calcada-atual">0x</strong></span>
+                            <span class="comp-label">Novo: <strong id="comp-sim-calcada-novo">0x</strong></span>
+                            <span class="comp-economy" id="comp-sim-calcada-economia">Economia: ≈ 0 L/mês</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider 6: Encher Piscina -->
+                    <div class="card slider-card" id="sim-card-piscina">
+                        <div class="slider-header">
+                            <span class="slider-name"><i class="fa-solid fa-water"></i> Encher Piscina (Mês)</span>
+                            <span class="slider-badge" id="badge-sim-piscina">0x</span>
+                        </div>
+                        <input type="range" class="range-slider" id="slider-sim-piscina" min="0" max="10" value="0">
+                        <span class="slider-desc">Encher ou complementar nível da piscina.</span>
+                        
+                        <!-- Comparação de cenários (IHC) -->
+                        <div class="slider-comparison" id="comp-sim-piscina">
+                            <span class="comp-label">Atual: <strong id="comp-sim-piscina-atual">0x</strong></span>
+                            <span class="comp-label">Novo: <strong id="comp-sim-piscina-novo">0x</strong></span>
+                            <span class="comp-economy" id="comp-sim-piscina-economia">Economia: ≈ 0 L/mês</span>
                         </div>
                     </div>
                 </div>
@@ -757,16 +808,31 @@
             <div class="scroll-content tab-content-padding">
                 <p class="section-intro">Acompanhe seu histórico de consumo comparando previsões, metas e faturas reais cadastradas.</p>
                 
-                <!-- Gráfico SVG Dinâmico -->
-                <div class="card chart-card">
+                <!-- Cartões Informativos Resumo (IHD: Contraste e Legibilidade) -->
+                <div class="report-summary-cards" id="report-summary-cards">
+                    <!-- Preenchido via JS -->
+                </div>
+                
+                <!-- Gráficos Comparativos -->
+                <div class="card chart-card" style="margin-bottom: 1.5rem;">
                     <h3>Consumo Mensal (Previsto vs Real)</h3>
-                    <div class="chart-container" id="chart-container">
+                    <div class="chart-container" id="chart-container-consumo">
                         <!-- Será preenchido via JS com um gráfico SVG Responsivo -->
                     </div>
                     <div class="chart-legend">
                         <span class="legend-item"><span class="legend-dot previsto"></span> Previsto</span>
                         <span class="legend-item"><span class="legend-dot real"></span> Real</span>
-                        <span class="legend-item"><span class="legend-dot meta"></span> Meta de Economia</span>
+                    </div>
+                </div>
+
+                <div class="card chart-card" style="margin-bottom: 1.5rem;">
+                    <h3>Valor da Conta (Previsto vs Real)</h3>
+                    <div class="chart-container" id="chart-container-custo">
+                        <!-- Será preenchido via JS com um gráfico SVG Responsivo -->
+                    </div>
+                    <div class="chart-legend">
+                        <span class="legend-item"><span class="legend-dot previsto"></span> Previsto</span>
+                        <span class="legend-item"><span class="legend-dot real"></span> Real</span>
                     </div>
                 </div>
 
@@ -884,7 +950,7 @@
         </section>
 
         <!-- Modal: Não sabe qual escolher? -->
-        <div id="modal-reference-info" class="modal-overlay hidden">
+        <div id="modal-reference-info" class="modal-overlay">
             <div class="modal-card card">
                 <div class="modal-header">
                     <h3><i class="fa-solid fa-circle-info"></i> Consumo de Referência</h3>
@@ -905,7 +971,7 @@
         </div>
 
         <!-- Modal: Detalhes da Semana -->
-        <div id="modal-week-details" class="modal-overlay hidden">
+        <div id="modal-week-details" class="modal-overlay">
             <div class="modal-card card">
                 <div class="modal-header">
                     <h3 id="modal-week-title"><i class="fa-solid fa-calendar-week"></i> Semana 1</h3>
@@ -937,7 +1003,7 @@
         </div>
 
         <!-- Modal: Confirmar Novo Mês -->
-        <div id="modal-confirm-new-month" class="modal-overlay hidden">
+        <div id="modal-confirm-new-month" class="modal-overlay">
             <div class="modal-card card">
                 <div class="modal-header">
                     <h3><i class="fa-solid fa-circle-question"></i> Novo Acompanhamento</h3>
@@ -963,6 +1029,6 @@
     </div>
 
     <!-- Script File -->
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=11"></script>
 </body>
 </html>
