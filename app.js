@@ -14,6 +14,14 @@ let state = {
     // Configurações e Parâmetros
     savingsTarget: 15, // em %
     waterTariff: 8.50, // em R$ por m³ (1000L)
+    tarifaMode: 'simples', // 'simples' | 'progressiva'
+    tarifaBlocos: [
+        { ate: 10000,  tarifa: 6.00  }, // até 10 m³: R$ 6,00/m³
+        { ate: 20000,  tarifa: 8.50  }, // de 10 a 20 m³: R$ 8,50/m³
+        { ate: 50000,  tarifa: 12.00 }, // de 20 a 50 m³: R$ 12,00/m³
+        { ate: Infinity, tarifa: 15.00 } // acima de 50 m³: R$ 15,00/m³
+        // Valores de referência Sanepar/Curitiba (2024). Usuário pode editar na tela de configurações.
+    ],
     
     // Dados Registrados
     registeredBills: [], // { id, mes, consumoReal (m³), valorPago (R$) }
@@ -52,8 +60,23 @@ const CONSUMO_REFERENCIA = {
         roupa: { name: 'Lavar Roupa (Máquina)', liters: 120 },
         carro: { name: 'Lavar Carro (Mangueira)', liters: 220 },
         jardim: { name: 'Regar Jardim (Mangueira)', liters: 150 },
-        calcada: { name: 'Lavar Calçada', liters: 100 },
-        piscina: { name: 'Encher Piscina (Ajuste)', liters: 1000 }
+        // [FIX-4] Calçada: corrigir valor subestimado de 100 L para 180 L
+        calcada: {
+            name: 'Lavar Calçada (Mangueira)',
+            liters: 180,
+            descricao: 'Uso de mangueira por aproximadamente 5 minutos (~180 L)'
+        },
+        // [FIX-1] Piscina: separar "Encher do Zero" de "Reposição Semanal"
+        piscina_reposicao: {
+            name: 'Piscina — Reposição Semanal',
+            liters: 1000,
+            descricao: 'Reposição por evaporação e respingo (~1.000 L/semana)'
+        },
+        piscina_encher: {
+            name: 'Piscina — Encher do Zero',
+            liters: 36000,
+            descricao: 'Enchimento completo de piscina residencial padrão (~36.000 L)'
+        }
     }
 };
 
@@ -92,6 +115,19 @@ function loadStateFromStorage() {
             // Mesclar estado padrão com o estado carregado para assegurar todos os campos
             state = { ...state, ...parsed };
             
+            // Garantir que os campos de tarifa existem
+            if (state.tarifaMode === undefined) {
+                state.tarifaMode = 'simples';
+            }
+            if (!state.tarifaBlocos) {
+                state.tarifaBlocos = [
+                    { ate: 10000,  tarifa: 6.00  }, // até 10 m³: R$ 6,00/m³
+                    { ate: 20000,  tarifa: 8.50  }, // de 10 a 20 m³: R$ 8,50/m³
+                    { ate: 50000,  tarifa: 12.00 }, // de 20 a 50 m³: R$ 12,00/m³
+                    { ate: Infinity, tarifa: 15.00 } // acima de 50 m³: R$ 15,00/m³
+                ];
+            }
+            
             // Garantir que as listas essenciais são arrays válidos
             if (!state.weeklyActivities || !Array.isArray(state.weeklyActivities)) {
                 state.weeklyActivities = [];
@@ -116,6 +152,9 @@ function loadStateFromStorage() {
             state.weeklyActivities.forEach(act => {
                 if (act.week === undefined) {
                     act.week = 1;
+                }
+                if (act.type === 'piscina') {
+                    act.type = 'piscina_reposicao';
                 }
             });
             
@@ -159,6 +198,13 @@ function resetAllData() {
         hasPool: false,
         savingsTarget: 15,
         waterTariff: 8.50,
+        tarifaMode: 'simples',
+        tarifaBlocos: [
+            { ate: 10000,  tarifa: 6.00  },
+            { ate: 20000,  tarifa: 8.50  },
+            { ate: 50000,  tarifa: 12.00 },
+            { ate: Infinity, tarifa: 15.00 }
+        ],
         registeredBills: [],
         weeklyActivities: [],
         isMonthFinished: false,
@@ -176,6 +222,34 @@ function resetAllData() {
         currentOnboardingSlide: 0
     };
     navigateTo('screen-splash');
+}
+
+// [FIX-3] Tarifa: adicionar suporte a blocos progressivos
+function calcularCustoAgua(litros) {
+    if (state.tarifaMode === 'simples') {
+        // Modo simples: tarifa única configurada pelo usuário
+        return (litros / 1000) * state.waterTariff;
+    }
+
+    // Modo progressivo: aplica blocos tarifários em cascata
+    let custo = 0;
+    let litrosRestantes = litros;
+    let limiteAnterior = 0;
+
+    for (const bloco of state.tarifaBlocos) {
+        const limiteBloco = bloco.ate; // já em litros
+        const litrosNesteBloco = Math.min(litrosRestantes, limiteBloco - limiteAnterior);
+
+        if (litrosNesteBloco <= 0) break;
+
+        custo += (litrosNesteBloco / 1000) * bloco.tarifa;
+        litrosRestantes -= litrosNesteBloco;
+        limiteAnterior = limiteBloco;
+
+        if (litrosRestantes <= 0) break;
+    }
+
+    return custo;
 }
 
 // --- Roteador de Telas (Navigation) ---
@@ -424,12 +498,17 @@ function setupEventListeners() {
     document.getElementById('btn-confirmar-atividade').addEventListener('click', () => {
         if (!selectedActivityType) return;
         
-        const actData = CONSUMO_REFERENCIA.activities[selectedActivityType];
-        const cost = (actData.liters / 1000) * state.waterTariff;
+        // TODO: atualizar HTML correspondente (opção piscina foi dividida em piscina_reposicao e piscina_encher no HTML)
+        let key = selectedActivityType;
+        if (key === 'piscina') {
+            key = 'piscina_reposicao';
+        }
+        const actData = CONSUMO_REFERENCIA.activities[key];
+        const cost = calcularCustoAgua(actData.liters);
         
         state.weeklyActivities.push({
             id: Date.now().toString(),
-            type: selectedActivityType,
+            type: key,
             name: actData.name,
             liters: actData.liters,
             cost: cost,
@@ -470,7 +549,8 @@ function setupEventListeners() {
             const consumoBaseMensal = metrics.consumoMensalBaseLitros;
             const consumoAdicionalMensal = state.weeklyActivities.reduce((sum, act) => sum + act.liters, 0);
             const consumoTotalEstimado = consumoBaseMensal + consumoAdicionalMensal;
-            const valorEstimadoConta = (consumoTotalEstimado / 1000) * state.waterTariff;
+            // [FIX-3] Tarifa: usar a função calcularCustoAgua
+            const valorEstimadoConta = calcularCustoAgua(consumoTotalEstimado);
             
             const consumoRealLitros = consumoM3 * 1000;
             const diferencaLitros = consumoRealLitros - consumoTotalEstimado;
@@ -480,6 +560,13 @@ function setupEventListeners() {
             
             // Filtrar registros antigos do mesmo período
             state.monthlyHistory = state.monthlyHistory.filter(h => h.period !== periodLabel);
+            
+            // [FIX-8] Situação da meta no histórico: critério dinâmico com base no percentual do usuário
+            const metaEconomiaLitros = consumoBaseMensal * (state.savingsTarget / 100);
+            const consumoMetaMaximo = consumoBaseMensal + metaEconomiaLitros;
+            
+            // Verificar situação: total estimado deve ser menor que base + tolerância da meta
+            const dentroMeta = consumoTotalEstimado <= consumoMetaMaximo;
             
             state.monthlyHistory.push({
                 id: Date.now().toString(),
@@ -492,7 +579,8 @@ function setupEventListeners() {
                 consumoReal: consumoRealLitros,
                 diferencaLitros: diferencaLitros,
                 diferencaReais: diferencaReais,
-                situacaoMeta: (consumoAdicionalMensal <= 2000) ? "Dentro da Meta" : "Acima da Meta"
+                metaLitros: metaEconomiaLitros,             // salvar a meta em litros para exibição futura
+                situacaoMeta: dentroMeta ? "Dentro da Meta" : "Acima da Meta"
             });
             
             state.cycleState = 'COMPARACAO_DISPONIVEL';
@@ -509,7 +597,14 @@ function setupEventListeners() {
     });
 
     // --- TELA SIMULADOR DE ECONOMIA ---
-    const sliders = ['slider-sim-banho', 'slider-sim-carro', 'slider-sim-jardim'];
+    const sliders = [
+        'slider-sim-banho', 
+        'slider-sim-carro', 
+        'slider-sim-jardim',
+        'slider-sim-roupa',
+        'slider-sim-calcada',
+        'slider-sim-piscina'
+    ];
     sliders.forEach(id => {
         const sliderEl = document.getElementById(id);
         if (sliderEl) {
@@ -554,11 +649,9 @@ function setupEventListeners() {
         state.savingsTarget = parseInt(document.getElementById('input-config-meta').value);
         state.waterTariff = parseFloat(document.getElementById('input-config-tarifa').value);
         
-        // Recalcular custos nas atividades registradas (opcional, mantemos o custo histórico ou atualizamos)
-        state.weeklyActivities.forEach(act => {
-            const baseLiters = CONSUMO_REFERENCIA.activities[act.type].liters;
-            act.cost = (baseLiters / 1000) * state.waterTariff;
-        });
+        // [FIX-9] Recálculo de custos ao salvar configurações: preservado o custo histórico original
+        // O custo de cada atividade é congelado no momento de seu registro. A nova tarifa será
+        // aplicada apenas a futuros registros.
 
         saveStateToStorage();
         
@@ -713,14 +806,25 @@ function getCurrentDate() {
 
 // --- Cálculos e Estimativas do Lar ---
 function calculateLarMetrics() {
-    // Consumo base mensal estimado em litros (120 litros/pessoa/dia * 30 dias)
-    const baselineMensal = state.residents * 120 * 30;
-    const valorEstimadoBase = (baselineMensal / 1000) * state.waterTariff;
+    // [FIX-2] Consumo base: usar número real de dias do mês
+    // Obter o número real de dias do mês atual para maior precisão
+    const dataAtual = getCurrentDate();
+    const diasNoMes = new Date(
+        dataAtual.getFullYear(),
+        dataAtual.getMonth() + 1,
+        0
+    ).getDate();
+
+    // Consumo base mensal: 120 litros/pessoa/dia × dias reais do mês
+    const baselineMensal = state.residents * 120 * diasNoMes;
+    // [FIX-3] Tarifa: usar a função calcularCustoAgua
+    const valorEstimadoBase = calcularCustoAgua(baselineMensal);
     
     return {
         consumoMensalBaseLitros: baselineMensal,
         valorEstimadoBase: valorEstimadoBase,
-        consumoDiarioPessoa: 120
+        consumoDiarioPessoa: 120,
+        diasNoMes: diasNoMes // expor para uso no dashboard se necessário
     };
 }
 
@@ -805,7 +909,8 @@ function renderDashboard() {
     
     // 4. Consumo Total Estimado (Base + Adicional total)
     const consumoTotalEstimado = consumoBaseMensal + consumoAdicionalMensal;
-    const valorEstimadoConta = (consumoTotalEstimado / 1000) * state.waterTariff;
+    // [FIX-3] Tarifa: usar a função calcularCustoAgua
+    const valorEstimadoConta = calcularCustoAgua(consumoTotalEstimado);
     
     // Meta de Atividades Extras Semanal (500L) e Mensal (2000L)
     const metaSemanalAtividades = 500;
@@ -822,7 +927,8 @@ function renderDashboard() {
         document.getElementById('dash-droplet-percentage').textContent = `${percentualGota}%`;
         document.getElementById('dash-droplet-liters').textContent = `${consumoAdicionalMensal}L / ${metaMensalAtividades}L`;
         if (subtitleEl) {
-            subtitleEl.textContent = `de consumo adicional mensal`;
+            // [FIX-7] Gota: legenda redefinida explicando que representa apenas consumo adicional
+            subtitleEl.textContent = `de atividades extras no mês (meta: 2.000 L)`;
         }
     } else {
         // Gota representa a semana ativa selecionada
@@ -832,7 +938,8 @@ function renderDashboard() {
         document.getElementById('dash-droplet-percentage').textContent = `${percentualGota}%`;
         document.getElementById('dash-droplet-liters').textContent = `${consumoAdicionalSemanal}L / ${metaSemanalAtividades}L`;
         if (subtitleEl) {
-            subtitleEl.textContent = `Consumo Adicional - Semana ${state.selectedWeek}`;
+            // [FIX-7] Gota: legenda redefinida explicando que representa apenas consumo adicional
+            subtitleEl.textContent = `Extras da Semana ${state.selectedWeek} (meta: 500 L)`;
         }
     }
     
@@ -850,7 +957,8 @@ function renderDashboard() {
     // Atualizar os Cards de Métricas Individuais (Atividades adicionais do mês inteiro)
     document.getElementById('dash-consumo-base-card').textContent = `${consumoBaseMensal.toLocaleString('pt-BR')} L`;
     document.getElementById('dash-consumo-adicional-card').textContent = `${consumoAdicionalMensal.toLocaleString('pt-BR')} L`;
-    document.getElementById('dash-consumo-total-card').textContent = `${consumoTotalEstimado.toLocaleString('pt-BR')} L`;
+    // [FIX-7] Gota/Card: adicionar nota explicativa de "Base + extras registradas" no consumo total
+    document.getElementById('dash-consumo-total-card').innerHTML = `${consumoTotalEstimado.toLocaleString('pt-BR')} L <span style="display:block; font-size:0.65rem; font-weight:400; color:var(--text-muted); margin-top:0.15rem;">Base + extras registradas</span>`;
     document.getElementById('dash-valor-estimado-card').textContent = `R$ ${valorEstimadoConta.toFixed(2).replace('.', ',')}`;
     // Consumo médio por pessoa (diário direto do parâmetro de referência)
     document.getElementById('dash-consumo-pessoa-card').textContent = `${metrics.consumoDiarioPessoa} L/pessoa/dia`;
@@ -1213,10 +1321,13 @@ function renderComparativoRealEstimado(consumoTotalEstimado, valorEstimadoConta)
                         <span class="comp-val">${(consumoRealLitros * 12).toLocaleString('pt-BR')} L</span>
                     </div>
                     <div class="comp-report-col">
-                        <span class="comp-label font-bold">Custo Anual Previsto:</span>
+                        <span class="comp-label font-bold">Custo Anual Previsto (estimativa*):</span>
                         <span class="comp-val text-success">R$ ${(valorPago * 12).toFixed(2).replace('.', ',')}</span>
                     </div>
                 </div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    * Estimativa baseada no consumo de um único mês. Pode variar conforme a sazonalidade (verão/inverno).
+                </p>
             </div>
             
             <div class="new-cycle-container">
@@ -1283,9 +1394,15 @@ function updateActivityPreview(actType) {
     
     previewPanel.classList.remove('hidden');
     
-    const actData = CONSUMO_REFERENCIA.activities[actType];
+    // TODO: atualizar HTML correspondente (opção piscina foi dividida em piscina_reposicao e piscina_encher no HTML)
+    let key = actType;
+    if (key === 'piscina') {
+        key = 'piscina_reposicao';
+    }
+    const actData = CONSUMO_REFERENCIA.activities[key];
     const liters = actData.liters;
-    const cost = (liters / 1000) * state.waterTariff;
+    // [FIX-3] Tarifa: usar a função calcularCustoAgua
+    const cost = calcularCustoAgua(liters);
     
     document.getElementById('preview-litros').textContent = `+${liters} Litros`;
     document.getElementById('preview-custo').textContent = `+R$ ${cost.toFixed(2).replace('.', ',')}`;
@@ -1295,181 +1412,143 @@ function updateActivityPreview(actType) {
 function initSimulator() {
     // Configurar visibilidade de rega de jardim com base no cadastro
     const gardenCard = document.getElementById('sim-card-jardim');
-    if (state.hasGarden) {
-        gardenCard.style.display = 'block';
-    } else {
-        gardenCard.style.display = 'none';
+    if (gardenCard) {
+        gardenCard.style.display = state.hasGarden ? 'block' : 'none';
     }
     
-    // Obter quantidade real de registros da semana selecionada
-    const weekActs = state.weeklyActivities.filter(act => act.week === state.selectedWeek);
-    
-    const atualBanho = weekActs.filter(act => act.type === 'banho').length;
-    const atualCarro = weekActs.filter(act => act.type === 'carro').length;
-    const atualJardim = state.hasGarden ? weekActs.filter(act => act.type === 'jardim').length : 0;
-    
-    const totalActs = weekActs.length;
+    // Obter quantidade real de registros do mês atual (todas as atividades acumuladas)
+    const monthActs = state.weeklyActivities;
     
     const emptyStateEl = document.getElementById('sim-empty-state');
     const slidersListEl = document.querySelector('.sliders-list');
     
-    if (totalActs === 0) {
-        // Exibir estado sem registros
-        if (emptyStateEl) emptyStateEl.classList.remove('hidden');
-        if (slidersListEl) slidersListEl.classList.add('hidden');
-        
-        // Todos os sliders iniciam em 0
-        document.getElementById('slider-sim-banho').max = 0;
-        document.getElementById('slider-sim-banho').value = 0;
-        document.getElementById('badge-sim-banho').textContent = '0x';
-        document.getElementById('comp-sim-banho-atual').textContent = '0x/semana';
-        document.getElementById('comp-sim-banho-novo').textContent = '0x/semana';
-        document.getElementById('comp-sim-banho-economia').textContent = 'Sem registros';
-        document.getElementById('comp-sim-banho-economia').className = 'comp-economy';
-        
-        document.getElementById('slider-sim-carro').max = 0;
-        document.getElementById('slider-sim-carro').value = 0;
-        document.getElementById('badge-sim-carro').textContent = '0x';
-        document.getElementById('comp-sim-carro-atual').textContent = '0x/mês';
-        document.getElementById('comp-sim-carro-novo').textContent = '0x/mês';
-        document.getElementById('comp-sim-carro-economia').textContent = 'Sem registros';
-        document.getElementById('comp-sim-carro-economia').className = 'comp-economy';
-        
-        if (state.hasGarden) {
-            document.getElementById('slider-sim-jardim').max = 0;
-            document.getElementById('slider-sim-jardim').value = 0;
-            document.getElementById('badge-sim-jardim').textContent = '0x';
-            document.getElementById('comp-sim-jardim-atual').textContent = '0x/semana';
-            document.getElementById('comp-sim-jardim-novo').textContent = '0x/semana';
-            document.getElementById('comp-sim-jardim-economia').textContent = 'Sem registros';
-            document.getElementById('comp-sim-jardim-economia').className = 'comp-economy';
+    const activitiesList = [
+        { key: 'banho', maxLimit: 50, unit: 'mês' },
+        { key: 'roupa', maxLimit: 30, unit: 'mês' },
+        { key: 'carro', maxLimit: 15, unit: 'mês' },
+        { key: 'jardim', maxLimit: 30, unit: 'mês', conditional: true, condVal: state.hasGarden },
+        { key: 'calcada', maxLimit: 30, unit: 'mês' },
+        // [FIX-1] Piscina: separar "Encher do Zero" e "Reposição Semanal"
+        { key: 'piscina_reposicao', maxLimit: 15, unit: 'mês' },
+        { key: 'piscina_encher', maxLimit: 5, unit: 'mês' }
+    ];
+    
+    // Ocultar sempre o estado vazio por solicitação do usuário (IHC: Simulador sempre ativo)
+    if (emptyStateEl) emptyStateEl.classList.add('hidden');
+    if (slidersListEl) slidersListEl.classList.remove('hidden');
+    
+    activitiesList.forEach(act => {
+        // [FIX-1] Piscina: mapear keys para o elemento HTML existente se necessário
+        let elKey = act.key;
+        if (elKey === 'piscina_reposicao') {
+            elKey = 'piscina';
+        } else if (elKey === 'piscina_encher') {
+            // TODO: criar slider separado para piscina_encher (não há elemento HTML correspondente)
+            return;
         }
         
-        // Economia = 0, conta = atual
-        const metrics = calculateLarMetrics();
-        const consumoAdicionalMensal = state.weeklyActivities.reduce((sum, act) => sum + act.liters, 0);
-        const consumoTotalAtual = metrics.consumoMensalBaseLitros + consumoAdicionalMensal;
-        const custoTotalAtual = (consumoTotalAtual / 1000) * state.waterTariff;
-        
-        document.getElementById('sim-economia-litros').textContent = '0 Litros';
-        document.getElementById('sim-economia-financeira').textContent = 'R$ 0,00';
-        document.getElementById('sim-economia-percentual').textContent = '0%';
-        document.getElementById('sim-nova-conta').textContent = `R$ ${custoTotalAtual.toFixed(2).replace('.', ',')}`;
-        
-        const feedbackMsgEl = document.getElementById('sim-feedback-msg');
-        if (feedbackMsgEl) {
-            feedbackMsgEl.textContent = "Você ainda não registrou atividades nesta semana.";
+        const count = monthActs.filter(a => a.type === act.key).length;
+        const sliderEl = document.getElementById(`slider-sim-${elKey}`);
+        if (sliderEl) {
+            sliderEl.disabled = false;
+            sliderEl.max = Math.max(act.maxLimit, count * 2);
+            sliderEl.value = count;
         }
         
-        const tipDescEl = document.getElementById('sim-tip-desc');
-        if (tipDescEl) {
-            tipDescEl.textContent = "Cadastre suas atividades no Registro Semanal para utilizar o simulador de economia.";
-        }
-    } else {
-        // Semana possui registros
-        if (emptyStateEl) emptyStateEl.classList.add('hidden');
-        if (slidersListEl) slidersListEl.classList.remove('hidden');
+        const badgeEl = document.getElementById(`badge-sim-${elKey}`);
+        if (badgeEl) badgeEl.textContent = `${count}x`;
         
-        // Configurar limites máximos (max = valor atual real) e valores iniciais nos controles
-        const sliderBanho = document.getElementById('slider-sim-banho');
-        sliderBanho.max = atualBanho;
-        sliderBanho.value = atualBanho;
-        document.getElementById('badge-sim-banho').textContent = `${atualBanho}x`;
-        document.getElementById('comp-sim-banho-atual').textContent = `${atualBanho}x/semana`;
-        document.getElementById('comp-sim-banho-novo').textContent = `${atualBanho}x/semana`;
+        const compAtualEl = document.getElementById(`comp-sim-${elKey}-atual`);
+        if (compAtualEl) compAtualEl.textContent = `${count}x/${act.unit}`;
         
-        const sliderCarro = document.getElementById('slider-sim-carro');
-        sliderCarro.max = atualCarro;
-        sliderCarro.value = atualCarro;
-        document.getElementById('badge-sim-carro').textContent = `${atualCarro}x`;
-        document.getElementById('comp-sim-carro-atual').textContent = `${atualCarro}x/mês`;
-        document.getElementById('comp-sim-carro-novo').textContent = `${atualCarro}x/mês`;
-        
-        if (state.hasGarden) {
-            const sliderJardim = document.getElementById('slider-sim-jardim');
-            sliderJardim.max = atualJardim;
-            sliderJardim.value = atualJardim;
-            document.getElementById('badge-sim-jardim').textContent = `${atualJardim}x`;
-            document.getElementById('comp-sim-jardim-atual').textContent = `${atualJardim}x/semana`;
-            document.getElementById('comp-sim-jardim-novo').textContent = `${atualJardim}x/semana`;
-        }
-        
-        updateSimulatorCalculations();
-    }
+        const compNovoEl = document.getElementById(`comp-sim-${elKey}-novo`);
+        if (compNovoEl) compNovoEl.textContent = `${count}x/${act.unit}`;
+    });
+    
+    updateSimulatorCalculations();
 }
 
 function updateSimulatorCalculations() {
     const metrics = calculateLarMetrics();
     
-    // Obter quantidade real de registros da semana selecionada (Cenário Atual)
-    const weekActs = state.weeklyActivities.filter(act => act.week === state.selectedWeek);
-    const atualBanho = weekActs.filter(act => act.type === 'banho').length;
-    const atualCarro = weekActs.filter(act => act.type === 'carro').length;
-    const atualJardim = state.hasGarden ? weekActs.filter(act => act.type === 'jardim').length : 0;
+    // Obter quantidade real de registros do mês atual (todas as atividades acumuladas)
+    const monthActs = state.weeklyActivities;
     
-    // Obter valores simulados
-    const banhosSim = parseInt(document.getElementById('slider-sim-banho').value);
-    document.getElementById('badge-sim-banho').textContent = `${banhosSim}x`;
-    document.getElementById('comp-sim-banho-novo').textContent = `${banhosSim}x/semana`;
+    const activitiesList = [
+        { key: 'banho', maxLimit: 50, unit: 'mês', liters: 180 },
+        { key: 'roupa', maxLimit: 30, unit: 'mês', liters: 120 },
+        { key: 'carro', maxLimit: 15, unit: 'mês', liters: 220 },
+        { key: 'jardim', maxLimit: 30, unit: 'mês', liters: 150, conditional: true, condVal: state.hasGarden },
+        // [FIX-4] Calçada: corrigir valor subestimado de 100 L para 180 L
+        { key: 'calcada', maxLimit: 30, unit: 'mês', liters: 180 },
+        // [FIX-1] Piscina: separar "Encher do Zero" e "Reposição Semanal"
+        { key: 'piscina_reposicao', maxLimit: 15, unit: 'mês', liters: 1000 },
+        { key: 'piscina_encher', maxLimit: 5, unit: 'mês', liters: 36000 }
+    ];
     
-    const carroSim = parseInt(document.getElementById('slider-sim-carro').value);
-    document.getElementById('badge-sim-carro').textContent = `${carroSim}x`;
-    document.getElementById('comp-sim-carro-novo').textContent = `${carroSim}x/mês`;
+    let totalAguaSalvaMensal = 0;
+    let alterouQualquer = false;
     
-    const jardimSim = state.hasGarden ? parseInt(document.getElementById('slider-sim-jardim').value) : 0;
-    if (state.hasGarden) {
-        document.getElementById('badge-sim-jardim').textContent = `${jardimSim}x`;
-        document.getElementById('comp-sim-jardim-novo').textContent = `${jardimSim}x/semana`;
-    }
-    
-    // Calcular economia por controle comparando o real atual com o simulado
-    const banhoDif = atualBanho - banhosSim;
-    const banhoSalvo = banhoDif * 180 * 4; // L/mês (180 litros por banho longo, 4 semanas)
-    const banhoEconomyEl = document.getElementById('comp-sim-banho-economia');
-    if (banhoDif > 0) {
-        banhoEconomyEl.textContent = `Economia: ≈ ${banhoSalvo.toLocaleString('pt-BR')} L/mês`;
-        banhoEconomyEl.className = 'comp-economy text-success';
-    } else {
-        banhoEconomyEl.textContent = 'Sem alterações';
-        banhoEconomyEl.className = 'comp-economy';
-    }
-    
-    const carroDif = atualCarro - carroSim;
-    const carroSalvo = carroDif * 220; // L/mês (220 litros por lavagem de carro)
-    const carroEconomyEl = document.getElementById('comp-sim-carro-economia');
-    if (carroDif > 0) {
-        carroEconomyEl.textContent = `Economia: ≈ ${carroSalvo.toLocaleString('pt-BR')} L/mês`;
-        carroEconomyEl.className = 'comp-economy text-success';
-    } else {
-        carroEconomyEl.textContent = 'Sem alterações';
-        carroEconomyEl.className = 'comp-economy';
-    }
-    
-    let jardimSalvo = 0;
-    if (state.hasGarden) {
-        const jardimDif = atualJardim - jardimSim;
-        jardimSalvo = jardimDif * 150 * 4; // L/mês (150 litros por rega)
-        const jardimEconomyEl = document.getElementById('comp-sim-jardim-economia');
-        if (jardimDif > 0) {
-            jardimEconomyEl.textContent = `Economia: ≈ ${jardimSalvo.toLocaleString('pt-BR')} L/mês`;
-            jardimEconomyEl.className = 'comp-economy text-success';
-        } else {
-            jardimEconomyEl.textContent = 'Sem alterações';
-            jardimEconomyEl.className = 'comp-economy';
+    activitiesList.forEach(act => {
+        if (act.conditional && !act.condVal) {
+            return;
         }
-    }
+        
+        // [FIX-1] Piscina: mapear keys para o elemento HTML existente se necessário
+        let elKey = act.key;
+        if (elKey === 'piscina_reposicao') {
+            elKey = 'piscina';
+        } else if (elKey === 'piscina_encher') {
+            // TODO: criar slider separado para piscina_encher (não há elemento HTML correspondente)
+            return;
+        }
+        
+        const countAtual = monthActs.filter(a => a.type === act.key).length;
+        const sliderEl = document.getElementById(`slider-sim-${elKey}`);
+        if (!sliderEl) return;
+        
+        const simVal = parseInt(sliderEl.value);
+        
+        // Atualizar badges do slider
+        const badgeEl = document.getElementById(`badge-sim-${elKey}`);
+        if (badgeEl) badgeEl.textContent = `${simVal}x`;
+        
+        const compNovoEl = document.getElementById(`comp-sim-${elKey}-novo`);
+        if (compNovoEl) compNovoEl.textContent = `${simVal}x/${act.unit}`;
+        
+        if (simVal !== countAtual) {
+            alterouQualquer = true;
+        }
+        
+        // Calcular economia (remover act.multiplier conforme [FIX-6])
+        const dif = countAtual - simVal;
+        const salvo = dif * act.liters;
+        totalAguaSalvaMensal += salvo;
+        
+        const compEconEl = document.getElementById(`comp-sim-${elKey}-economia`);
+        if (compEconEl) {
+            if (dif > 0) {
+                compEconEl.textContent = `Economia: ≈ ${salvo.toLocaleString('pt-BR')} L/mês`;
+                compEconEl.className = 'comp-economy text-success';
+            } else if (dif < 0) {
+                compEconEl.textContent = `Aumento: ≈ ${Math.abs(salvo).toLocaleString('pt-BR')} L/mês`;
+                compEconEl.className = 'comp-economy text-warning';
+            } else {
+                compEconEl.textContent = 'Sem alterações';
+                compEconEl.className = 'comp-economy';
+            }
+        }
+    });
     
-    // Total economizado (Soma algébrica das reduções)
-    const totalAguaSalvaMensal = banhoSalvo + carroSalvo + jardimSalvo;
+    const economiaLiters = totalAguaSalvaMensal;
+    // [FIX-3] Tarifa: usar a função calcularCustoAgua, mantendo o sinal se for negativo (desperdício)
+    const economiaFinanceira = (economiaLiters >= 0 ? 1 : -1) * calcularCustoAgua(Math.abs(economiaLiters));
     
-    // Capped a 0 para economia real
-    const economiaLiters = Math.max(0, totalAguaSalvaMensal);
-    const economiaFinanceira = (economiaLiters / 1000) * state.waterTariff;
-    
-    // Consumo Total Atual Estimado (mensal do dashboard)
+    // Consumo Total Atual Estimado
     const consumoAdicionalMensal = state.weeklyActivities.reduce((sum, act) => sum + act.liters, 0);
     const consumoTotalAtual = metrics.consumoMensalBaseLitros + consumoAdicionalMensal;
-    const custoTotalAtual = (consumoTotalAtual / 1000) * state.waterTariff;
+    // [FIX-3] Tarifa: usar a função calcularCustoAgua
+    const custoTotalAtual = calcularCustoAgua(consumoTotalAtual);
     
     // Nova conta estimada (Atual - Economia)
     const novaContaEstimada = Math.max(0, custoTotalAtual - economiaFinanceira);
@@ -1480,69 +1559,80 @@ function updateSimulatorCalculations() {
         percentualReducao = Math.round((economiaLiters / consumoTotalAtual) * 100);
     }
     
-    // Atualizar Indicadores Principais (Topo)
-    document.getElementById('sim-economia-litros').textContent = `${Math.round(economiaLiters).toLocaleString('pt-BR')} Litros`;
-    document.getElementById('sim-economia-financeira').textContent = `R$ ${economiaFinanceira.toFixed(2).replace('.', ',')}`;
+    // Atualizar Indicadores Principais
+    const litFormat = Math.round(economiaLiters).toLocaleString('pt-BR');
+    const finFormat = Math.abs(economiaFinanceira).toFixed(2).replace('.', ',');
+    
+    document.getElementById('sim-economia-litros').textContent = `${economiaLiters < 0 ? '-' : ''}${Math.abs(Math.round(economiaLiters)).toLocaleString('pt-BR')} Litros`;
+    document.getElementById('sim-economia-financeira').textContent = `${economiaFinanceira < 0 ? '-' : ''}R$ ${finFormat}`;
+    
+    const litrosEl = document.getElementById('sim-economia-litros');
+    const financeiroEl = document.getElementById('sim-economia-financeira');
+    if (economiaLiters > 0) {
+        litrosEl.style.color = 'var(--success)';
+        financeiroEl.style.color = 'var(--success)';
+    } else if (economiaLiters < 0) {
+        litrosEl.style.color = 'var(--warning)';
+        financeiroEl.style.color = 'var(--warning)';
+    } else {
+        litrosEl.style.color = 'var(--text-white)';
+        financeiroEl.style.color = 'var(--text-white)';
+    }
+    
     document.getElementById('sim-economia-percentual').textContent = `${percentualReducao}%`;
     document.getElementById('sim-nova-conta').textContent = `R$ ${novaContaEstimada.toFixed(2).replace('.', ',')}`;
     
     // Mensagem de Feedback Contextual
     const feedbackMsgEl = document.getElementById('sim-feedback-msg');
-    
-    const alterouBanho = banhosSim !== atualBanho;
-    const alterouCarro = carroSim !== atualCarro;
-    const alterouJardim = state.hasGarden && (jardimSim !== atualJardim);
-    
-    if (!alterouBanho && !alterouCarro && !alterouJardim) {
+    if (!alterouQualquer) {
         feedbackMsgEl.textContent = "Altere um ou mais hábitos para visualizar sua economia potencial.";
     } else {
-        // Feedback contextual inteligente
-        if (alterouBanho && !alterouCarro && !alterouJardim) {
-            feedbackMsgEl.textContent = `Reduzindo os banhos longos para ${banhosSim} vezes por semana você economizaria aproximadamente ${banhoSalvo.toLocaleString('pt-BR')} litros de água por mês.`;
-        } else if (!alterouBanho && alterouCarro && !alterouJardim) {
-            feedbackMsgEl.textContent = `Diminuir a lavagem do carro para ${carroSim} vez${carroSim > 1 ? 'es' : ''} por mês representa uma economia aproximada de ${carroSalvo.toLocaleString('pt-BR')} litros.`;
-        } else if (!alterouBanho && !alterouCarro && alterouJardim) {
-            feedbackMsgEl.textContent = `Regando o jardim ${jardimSim} vezes por semana você economizaria aproximadamente ${jardimSalvo.toLocaleString('pt-BR')} litros por mês.`;
+        if (economiaLiters < 0) {
+            feedbackMsgEl.textContent = "Atenção: A simulação indica um aumento de consumo em relação ao seu comportamento atual.";
         } else {
-            feedbackMsgEl.textContent = `Com essas mudanças você poderá economizar aproximadamente ${Math.round(totalAguaSalvaMensal).toLocaleString('pt-BR')} litros de água por mês.`;
+            feedbackMsgEl.textContent = `Com essas mudanças você poderá economizar aproximadamente ${Math.round(economiaLiters).toLocaleString('pt-BR')} litros de água por mês.`;
         }
     }
     
     // Seção Dica do AquaConsciente
     const tipDescEl = document.getElementById('sim-tip-desc');
-    
-    if (alterouBanho || alterouCarro || alterouJardim) {
-        // Encontrar qual alteração simulada gerou a maior economia
-        const economias = [
-            { tipo: 'banho', valor: Math.max(0, banhoSalvo), texto: "reduzir os banhos longos representa a maior redução no consumo da sua residência." },
-            { tipo: 'carro', valor: Math.max(0, carroSalvo), texto: "reduzir a lavagem do carro gera a maior economia de água." },
-            { tipo: 'jardim', valor: Math.max(0, jardimSalvo), texto: "reduzir a rega do jardim representa o maior impacto na economia de água do seu lar." }
-        ];
+    if (alterouQualquer) {
+        // Calcular economias separadamente
+        const econs = [];
+        activitiesList.forEach(act => {
+            if (act.conditional && !act.condVal) return;
+            const countAtual = monthActs.filter(a => a.type === act.key).length;
+            const sliderEl = document.getElementById(`slider-sim-${act.key}`);
+            if (!sliderEl) return;
+            const simVal = parseInt(sliderEl.value);
+            const dif = countAtual - simVal;
+            const salvo = dif * act.liters * act.multiplier;
+            econs.push({ key: act.key, name: act.key === 'banho' ? 'banhos longos' : (act.key === 'roupa' ? 'lavagem de roupa' : (act.key === 'carro' ? 'lavagem de carro' : (act.key === 'jardim' ? 'rega do jardim' : (act.key === 'calcada' ? 'lavagem de calçada' : 'uso da piscina')))), valor: salvo });
+        });
         
-        // Ordenar descrescente
-        economias.sort((a, b) => b.valor - a.valor);
+        econs.sort((a, b) => b.valor - a.valor);
         
-        if (economias[0].valor > 0) {
-            tipDescEl.textContent = `Entre todas as alterações simuladas, ${economias[0].texto}`;
+        if (econs[0].valor > 0) {
+            tipDescEl.textContent = `Entre todas as alterações simuladas, reduzir o consumo de ${econs[0].name} representa o maior impacto na sua economia.`;
         } else {
             tipDescEl.textContent = "Ajuste os sliders para reduzir seus hábitos e simular uma economia real.";
         }
     } else {
-        // Sem alterações ainda: mostrar recomendação com base no maior potencial dos hábitos da semana
-        const potBanho = atualBanho * 180 * 4;
-        const potCarro = atualCarro * 220;
-        const potJardim = state.hasGarden ? atualJardim * 150 * 4 : 0;
+        // Encontrar potencial máximo
+        const econs = [];
+        activitiesList.forEach(act => {
+            if (act.conditional && !act.condVal) return;
+            const countAtual = monthActs.filter(a => a.type === act.key).length;
+            const pot = countAtual * act.liters * act.multiplier;
+            econs.push({ name: act.key === 'banho' ? 'banhos longos' : (act.key === 'roupa' ? 'lavagem de roupa' : (act.key === 'carro' ? 'lavagem de carro' : (act.key === 'jardim' ? 'rega do jardim' : (act.key === 'calcada' ? 'lavagem de calçada' : 'uso da piscina')))), valor: pot });
+        });
         
-        const maxPotential = Math.max(potBanho, potCarro, potJardim);
+        econs.sort((a, b) => b.valor - a.valor);
         
-        if (maxPotential === 0) {
-            tipDescEl.textContent = "Excelente! Seus hábitos de consumo estão em níveis mínimos nesta semana.";
-        } else if (maxPotential === potBanho) {
-            tipDescEl.textContent = "Reduzir os banhos longos representa a maior redução no consumo da sua residência.";
-        } else if (maxPotential === potCarro) {
-            tipDescEl.textContent = "Reduzir a lavagem do carro com mangueira representa a maior oportunidade de redução no seu consumo mensal.";
+        if (econs[0].valor === 0) {
+            tipDescEl.textContent = "Excelente! Seus hábitos de consumo estão em níveis mínimos neste mês.";
         } else {
-            tipDescEl.textContent = "Diminuir a irrigação do jardim é o hábito que trará a maior economia potencial de água para o seu lar.";
+            tipDescEl.textContent = `Reduzir o consumo em ${econs[0].name} representa a maior oportunidade de economia de água para este mês.`;
         }
     }
 }
@@ -1592,7 +1682,7 @@ function renderHistory() {
                 <p>Nenhuma conta real registrada ainda.</p>
             </div>
         `;
-        renderChartSVG([]);
+        renderCharts();
         return;
     }
     
@@ -1703,104 +1793,171 @@ function renderHistory() {
         });
     }
     
-    // Desenhar o gráfico de faturas cadastradas
-    renderChartSVG(state.registeredBills);
+    // Desenhar os cartões resumo e os gráficos comparativos
+    renderReportSummary();
+    renderCharts();
 }
 
-// Desenhar gráfico dinâmico em SVG nativo
-function renderChartSVG(bills) {
-    const container = document.getElementById('chart-container');
-    const width = container.clientWidth || 350;
-    const height = 180;
+// Desenhar os cartões resumo e os gráficos comparativos
+function renderReportSummary() {
+    const container = document.getElementById('report-summary-cards');
+    if (!container) return;
     
-    // Dados de exemplo caso não possua faturas reais
-    let chartData = [];
-    if (bills.length === 0) {
-        chartData = [
-            { mes: 'Out', previsto: 12000, real: 0 },
-            { mes: 'Nov', previsto: 12000, real: 0 },
-            { mes: 'Dez', previsto: 12000, real: 0 }
-        ];
-    } else {
-        // Limitar a no máximo as últimas 5 contas registradas para caber no gráfico
-        const ultimasContas = bills.slice(-5);
-        const metrics = calculateLarMetrics();
-        const consumoAdicionalMensal = state.weeklyActivities.reduce((sum, act) => sum + act.liters, 0);
-        chartData = ultimasContas.map(b => ({
-            mes: b.mes.substring(0, 3), // Apenas as primeiras 3 letras
-            previsto: metrics.consumoMensalBaseLitros + consumoAdicionalMensal,
-            real: b.consumoReal * 1000
-        }));
+    let previstoLiters = 0;
+    let realLiters = 0;
+    let previstoCost = 0;
+    let realCost = 0;
+    
+    if (state.monthlyHistory && state.monthlyHistory.length > 0) {
+        // Pegar o último mês consolidado
+        const lastMonth = state.monthlyHistory[state.monthlyHistory.length - 1];
+        previstoLiters = lastMonth.consumoTotal;
+        realLiters = lastMonth.consumoReal;
+        previstoCost = lastMonth.valorEstimado;
+        realCost = lastMonth.valorReal;
     }
     
-    // Encontrar valor máximo para definir escala
-    const maxVal = Math.max(
-        ...chartData.map(d => Math.max(d.previsto, d.real)), 
-        8000 // mínimo de escala
-    ) * 1.15; // 15% de margem no topo
+    container.innerHTML = `
+        <div class="card summary-card" style="border-left: 4px solid #2563EB;">
+            <span class="card-title-lbl"><i class="fa-solid fa-droplet" style="color: #2563EB; margin-right: 0.35rem;"></i> Consumo Previsto:</span>
+            <strong class="card-val-lbl">${previstoLiters > 0 ? previstoLiters.toLocaleString('pt-BR') + ' L' : '--- L'}</strong>
+        </div>
+        <div class="card summary-card" style="border-left: 4px solid #16A34A;">
+            <span class="card-title-lbl"><i class="fa-solid fa-droplet" style="color: #16A34A; margin-right: 0.35rem;"></i> Consumo Real:</span>
+            <strong class="card-val-lbl">${realLiters > 0 ? realLiters.toLocaleString('pt-BR') + ' L' : '--- L'}</strong>
+        </div>
+        <div class="card summary-card" style="border-left: 4px solid #2563EB;">
+            <span class="card-title-lbl"><i class="fa-solid fa-hand-holding-dollar" style="color: #2563EB; margin-right: 0.35rem;"></i> Valor Previsto:</span>
+            <strong class="card-val-lbl">${previstoCost > 0 ? 'R$ ' + previstoCost.toFixed(2).replace('.', ',') : 'R$ ---'}</strong>
+        </div>
+        <div class="card summary-card" style="border-left: 4px solid #16A34A;">
+            <span class="card-title-lbl"><i class="fa-solid fa-hand-holding-dollar" style="color: #16A34A; margin-right: 0.35rem;"></i> Valor Real:</span>
+            <strong class="card-val-lbl">${realCost > 0 ? 'R$ ' + realCost.toFixed(2).replace('.', ',') : 'R$ ---'}</strong>
+        </div>
+    `;
+}
+
+// Desenhar os gráficos comparativos
+function renderCharts() {
+    const containerConsumo = document.getElementById('chart-container-consumo');
+    const containerCusto = document.getElementById('chart-container-custo');
     
-    // Desenhar SVG
+    if (!containerConsumo || !containerCusto) return;
+    
+    if (!state.monthlyHistory || state.monthlyHistory.length === 0) {
+        const msg = `
+            <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 2rem 0; width: 100%;">
+                <i class="fa-solid fa-chart-column" style="font-size: 1.5rem; margin-bottom: 0.5rem; color: rgba(255,255,255,0.2);"></i><br>
+                Ainda não há dados históricos consolidados. Conclua o ciclo mensal e registre a conta real de água para visualizar as comparações.
+            </div>
+        `;
+        containerConsumo.innerHTML = msg;
+        containerCusto.innerHTML = msg;
+        return;
+    }
+    
+    // Pegar os últimos 5 meses do histórico
+    const lastMonths = state.monthlyHistory.slice(-5);
+    
+    // Desenhar Gráfico 1: Consumo (Previsto vs Real)
+    drawSVGChart(containerConsumo, lastMonths, 'consumoTotal', 'consumoReal', 'L');
+    
+    // Desenhar Gráfico 2: Custo (Previsto vs Real)
+    drawSVGChart(containerCusto, lastMonths, 'valorEstimado', 'valorReal', 'R$');
+}
+
+function drawSVGChart(container, data, keyPrevisto, keyReal, unit) {
+    const width = 620; // Alterado para 620px de largura fixa para melhorar a relação de aspecto (IHD)
+    const height = 350; // Altura total de 350px
+    
+    // Encontrar o valor máximo para escala
+    const maxVal = Math.max(
+        ...data.map(d => Math.max(d[keyPrevisto], d[keyReal])),
+        unit === 'L' ? 5000 : 50
+    ) * 1.25; // 25% de margem no topo para valores sobre as barras
+    
     let svgContent = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" class="chart-svg" xmlns="http://www.w3.org/2000/svg">`;
     
-    // Adicionar Linhas de Grade e Eixo Y
+    // Linhas de Grade e Eixo Y
     const gridLines = 4;
     for (let i = 0; i <= gridLines; i++) {
-        const y = 20 + (i * (height - 50) / gridLines);
-        const val = Math.round(maxVal - (i * maxVal / gridLines));
+        const y = 35 + (i * (height - 85) / gridLines);
+        const val = maxVal - (i * maxVal / gridLines);
+        
+        let label = '';
+        if (unit === 'L') {
+            label = `${Math.round(val / 1000)}k L`;
+        } else {
+            label = `R$ ${Math.round(val)}`;
+        }
+        
         svgContent += `
-            <line x1="45" y1="${y}" x2="${width - 15}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3" />
-            <text x="35" y="${y + 4}" fill="rgba(255,255,255,0.4)" font-size="9" text-anchor="end">${(val / 1000).toFixed(1)}k L</text>
+            <line x1="65" y1="${y}" x2="${width - 15}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3" />
+            <text x="52" y="${y + 5}" fill="rgba(255,255,255,0.95)" font-size="14" font-weight="800" text-anchor="end">${label}</text>
         `;
     }
     
-    // Largura de cada grupo de barras
-    const groupWidth = (width - 60) / chartData.length;
-    const barWidth = 14;
+    // Desenhar Barras
+    const groupWidth = (width - 80) / data.length;
+    const barWidth = 32; // Barras bem mais largas e visíveis
     
-    chartData.forEach((d, idx) => {
-        const x = 50 + (idx * groupWidth) + (groupWidth / 2) - 15;
+    data.forEach((d, idx) => {
+        const xGroup = 65 + (idx * groupWidth);
+        const xPrevisto = xGroup + (groupWidth / 2) - barWidth - 12;
+        const xReal = xGroup + (groupWidth / 2) + 12;
         
-        // Altura barra Previsto
-        const hPrevisto = (d.previsto / maxVal) * (height - 50);
-        const yPrevisto = height - 30 - hPrevisto;
+        const valPrevisto = d[keyPrevisto];
+        const valReal = d[keyReal];
         
-        // Altura barra Real
-        const hReal = (d.real / maxVal) * (height - 50);
-        const yReal = height - 30 - hReal;
+        const hPrevisto = (valPrevisto / maxVal) * (height - 85);
+        const yPrevisto = height - 45 - hPrevisto;
         
-        // Desenhar Previsto (Barra Azul Escuro)
+        const hReal = (valReal / maxVal) * (height - 85);
+        const yReal = height - 45 - hReal;
+        
+        // Rótulos de valores em cima das barras
+        let valLabelPrevisto = '';
+        let valLabelReal = '';
+        if (unit === 'L') {
+            valLabelPrevisto = `${Math.round(valPrevisto).toLocaleString('pt-BR')} L`;
+            valLabelReal = `${Math.round(valReal).toLocaleString('pt-BR')} L`;
+        } else {
+            valLabelPrevisto = `R$ ${Math.round(valPrevisto)}`;
+            valLabelReal = `R$ ${Math.round(valReal)}`;
+        }
+        
+        // Barra Previsto (Azul #2563EB)
         svgContent += `
-            <rect x="${x}" y="${yPrevisto}" width="${barWidth}" height="${hPrevisto}" rx="4" fill="#1e3a8a" opacity="0.8"/>
+            <rect x="${xPrevisto}" y="${yPrevisto}" width="${barWidth}" height="${hPrevisto}" rx="4" fill="#2563EB" opacity="0.95">
+                <title>Previsto: ${valLabelPrevisto}</title>
+            </rect>
+            <text x="${xPrevisto + barWidth / 2}" y="${yPrevisto - 8}" fill="#ffffff" font-size="13" font-weight="800" text-anchor="middle">${valLabelPrevisto}</text>
         `;
         
-        // Desenhar Real (Barra Azul Claro) - apenas se for maior que zero
-        if (d.real > 0) {
+        // Barra Real (Verde #16A34A)
+        if (valReal > 0) {
             svgContent += `
-                <rect x="${x + barWidth + 3}" y="${yReal}" width="${barWidth}" height="${hReal}" rx="4" fill="url(#droplet-fill-grad)"/>
+                <rect x="${xReal}" y="${yReal}" width="${barWidth}" height="${hReal}" rx="4" fill="#16A34A" opacity="0.95">
+                    <title>Real: ${valLabelReal}</title>
+                </rect>
+                <text x="${xReal + barWidth / 2}" y="${yReal - 8}" fill="#ffffff" font-size="13" font-weight="800" text-anchor="middle">${valLabelReal}</text>
             `;
         } else {
-            // Se real for zero, desenhar pontilhado indicativo
+            // Pontilhado indicando que não foi informado
             svgContent += `
-                <rect x="${x + barWidth + 3}" y="${height - 30}" width="${barWidth}" height="1" fill="rgba(255,255,255,0.2)"/>
+                <rect x="${xReal}" y="${height - 45}" width="${barWidth}" height="1" fill="rgba(255,255,255,0.2)"/>
+                <text x="${xReal + barWidth / 2}" y="${height - 50}" fill="rgba(255,255,255,0.4)" font-size="11" font-weight="700" text-anchor="middle">N/A</text>
             `;
         }
         
         // Rótulo do Mês no eixo X
+        const mesLabel = d.period.split(" de ")[0];
         svgContent += `
-            <text x="${x + barWidth + 1}" y="${height - 10}" fill="rgba(255,255,255,0.6)" font-size="10" text-anchor="middle">${d.mes}</text>
+            <text x="${xGroup + groupWidth / 2}" y="${height - 15}" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle">${mesLabel}</text>
         `;
     });
     
-    // Defs para o gradiente das barras
-    svgContent += `
-        <defs>
-            <linearGradient id="droplet-fill-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#00f2fe" />
-                <stop offset="100%" stop-color="#4facfe" />
-            </linearGradient>
-        </defs>
-    </svg>`;
-    
+    svgContent += `</svg>`;
     container.innerHTML = svgContent;
 }
 
