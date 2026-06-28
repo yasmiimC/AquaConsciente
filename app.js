@@ -268,6 +268,7 @@ function navigateTo(screenId) {
     // Se estiver navegando para o dashboard ou abas, atualizar barra ativa
     if (screenId === 'screen-dashboard') {
         updateBottomNavActive('dashboard');
+        triggerScrollIndicator();
     } else if (screenId === 'screen-simulador') {
         updateBottomNavActive('simulador');
         initSimulator();
@@ -286,7 +287,101 @@ function navigateTo(screenId) {
             ];
             selectMesEl.value = meses[getCurrentDate().getMonth()];
         }
+    } else if (screenId === 'screen-registro-semanal') {
+        triggerScrollIndicatorRegistro();
     }
+}
+
+let scrollIndicatorTimer = null;
+
+function triggerScrollIndicator() {
+    const indicator = document.getElementById('scroll-indicator');
+    if (!indicator) return;
+    
+    // Se já foi mostrado nesta sessão, não mostrar novamente
+    if (sessionStorage.getItem('scroll_indicator_shown') === 'true') {
+        indicator.classList.add('fade-out');
+        return;
+    }
+    
+    // Mostrar indicador
+    indicator.classList.remove('fade-out');
+    
+    // Registrar que foi exibido
+    sessionStorage.setItem('scroll_indicator_shown', 'true');
+    
+    // Função para ocultar com fade-out
+    const hideIndicator = () => {
+        indicator.classList.add('fade-out');
+        if (scrollIndicatorTimer) {
+            clearTimeout(scrollIndicatorTimer);
+            scrollIndicatorTimer = null;
+        }
+        // Limpar listeners com capture correspondente
+        window.removeEventListener('scroll', hideIndicator, { capture: true });
+        document.removeEventListener('scroll', hideIndicator, { capture: true });
+    };
+    
+    // Click listener no próprio indicador para fechar imediatamente sem disparar cliques atrás dele
+    indicator.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        hideIndicator();
+    });
+    
+    // Sumir automaticamente após 5 segundos
+    if (scrollIndicatorTimer) clearTimeout(scrollIndicatorTimer);
+    scrollIndicatorTimer = setTimeout(hideIndicator, 5000);
+    
+    // Escutar rolagem usando a fase de captura para capturar scroll em qualquer elemento descendente (IHC)
+    window.addEventListener('scroll', hideIndicator, { capture: true, passive: true });
+    document.addEventListener('scroll', hideIndicator, { capture: true, passive: true });
+}
+
+let scrollIndicatorRegistroTimer = null;
+
+function triggerScrollIndicatorRegistro() {
+    const indicator = document.getElementById('scroll-indicator-registro');
+    if (!indicator) return;
+    
+    // Se já foi mostrado nesta sessão, não mostrar novamente
+    if (sessionStorage.getItem('scroll_indicator_registro_shown') === 'true') {
+        indicator.classList.add('fade-out');
+        return;
+    }
+    
+    // Mostrar indicador
+    indicator.classList.remove('fade-out');
+    
+    // Registrar que foi exibido
+    sessionStorage.setItem('scroll_indicator_registro_shown', 'true');
+    
+    // Função para ocultar com fade-out
+    const hideIndicatorRegistro = () => {
+        indicator.classList.add('fade-out');
+        if (scrollIndicatorRegistroTimer) {
+            clearTimeout(scrollIndicatorRegistroTimer);
+            scrollIndicatorRegistroTimer = null;
+        }
+        // Limpar listeners
+        window.removeEventListener('scroll', hideIndicatorRegistro, { capture: true });
+        document.removeEventListener('scroll', hideIndicatorRegistro, { capture: true });
+    };
+    
+    // Click listener no próprio indicador para fechar imediatamente
+    indicator.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        hideIndicatorRegistro();
+    });
+    
+    // Sumir automaticamente após 5 segundos
+    if (scrollIndicatorRegistroTimer) clearTimeout(scrollIndicatorRegistroTimer);
+    scrollIndicatorRegistroTimer = setTimeout(hideIndicatorRegistro, 5000);
+    
+    // Escutar rolagem usando a fase de captura (IHC)
+    window.addEventListener('scroll', hideIndicatorRegistro, { capture: true, passive: true });
+    document.addEventListener('scroll', hideIndicatorRegistro, { capture: true, passive: true });
 }
 
 function updateBottomNavActive(navName) {
@@ -928,7 +1023,7 @@ function renderDashboard() {
         document.getElementById('dash-droplet-liters').textContent = `${consumoAdicionalMensal}L / ${metaMensalAtividades}L`;
         if (subtitleEl) {
             // [FIX-7] Gota: legenda redefinida explicando que representa apenas consumo adicional
-            subtitleEl.textContent = `de atividades extras no mês (meta: 2.000 L)`;
+            subtitleEl.innerHTML = `Extras no Mês<br>(meta: 2.000 L)`;
         }
     } else {
         // Gota representa a semana ativa selecionada
@@ -939,7 +1034,7 @@ function renderDashboard() {
         document.getElementById('dash-droplet-liters').textContent = `${consumoAdicionalSemanal}L / ${metaSemanalAtividades}L`;
         if (subtitleEl) {
             // [FIX-7] Gota: legenda redefinida explicando que representa apenas consumo adicional
-            subtitleEl.textContent = `Extras da Semana ${state.selectedWeek} (meta: 500 L)`;
+            subtitleEl.innerHTML = `Extras da Semana ${state.selectedWeek}<br>(meta: 500 L)`;
         }
     }
     
@@ -1867,14 +1962,14 @@ function renderCharts() {
 }
 
 function drawSVGChart(container, data, keyPrevisto, keyReal, unit) {
-    const width = 620; // Alterado para 620px de largura fixa para melhorar a relação de aspecto (IHD)
-    const height = 350; // Altura total de 350px
+    const width = 640; // Alterado para 640px de largura fixa para melhorar a relação de aspecto (IHD)
+    const height = 380; // Altura total de 380px
     
     // Encontrar o valor máximo para escala
     const maxVal = Math.max(
         ...data.map(d => Math.max(d[keyPrevisto], d[keyReal])),
         unit === 'L' ? 5000 : 50
-    ) * 1.25; // 25% de margem no topo para valores sobre as barras
+    ) * 1.28; // 28% de margem no topo para valores sobre as barras com fontes maiores
     
     let svgContent = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" class="chart-svg" xmlns="http://www.w3.org/2000/svg">`;
     
@@ -1893,18 +1988,18 @@ function drawSVGChart(container, data, keyPrevisto, keyReal, unit) {
         
         svgContent += `
             <line x1="65" y1="${y}" x2="${width - 15}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3,3" />
-            <text x="52" y="${y + 5}" fill="rgba(255,255,255,0.95)" font-size="14" font-weight="800" text-anchor="end">${label}</text>
+            <text x="52" y="${y + 5}" fill="rgba(255,255,255,0.95)" font-size="15" font-weight="900" text-anchor="end">${label}</text>
         `;
     }
     
     // Desenhar Barras
     const groupWidth = (width - 80) / data.length;
-    const barWidth = 32; // Barras bem mais largas e visíveis
+    const barWidth = 34; // Barras bem mais largas e visíveis
     
     data.forEach((d, idx) => {
         const xGroup = 65 + (idx * groupWidth);
-        const xPrevisto = xGroup + (groupWidth / 2) - barWidth - 12;
-        const xReal = xGroup + (groupWidth / 2) + 12;
+        const xPrevisto = xGroup + (groupWidth / 2) - barWidth - 14;
+        const xReal = xGroup + (groupWidth / 2) + 14;
         
         const valPrevisto = d[keyPrevisto];
         const valReal = d[keyReal];
@@ -1931,7 +2026,7 @@ function drawSVGChart(container, data, keyPrevisto, keyReal, unit) {
             <rect x="${xPrevisto}" y="${yPrevisto}" width="${barWidth}" height="${hPrevisto}" rx="4" fill="#2563EB" opacity="0.95">
                 <title>Previsto: ${valLabelPrevisto}</title>
             </rect>
-            <text x="${xPrevisto + barWidth / 2}" y="${yPrevisto - 8}" fill="#ffffff" font-size="13" font-weight="800" text-anchor="middle">${valLabelPrevisto}</text>
+            <text x="${xPrevisto + barWidth / 2}" y="${yPrevisto - 10}" fill="#ffffff" font-size="14" font-weight="900" text-anchor="middle">${valLabelPrevisto}</text>
         `;
         
         // Barra Real (Verde #16A34A)
@@ -1940,20 +2035,20 @@ function drawSVGChart(container, data, keyPrevisto, keyReal, unit) {
                 <rect x="${xReal}" y="${yReal}" width="${barWidth}" height="${hReal}" rx="4" fill="#16A34A" opacity="0.95">
                     <title>Real: ${valLabelReal}</title>
                 </rect>
-                <text x="${xReal + barWidth / 2}" y="${yReal - 8}" fill="#ffffff" font-size="13" font-weight="800" text-anchor="middle">${valLabelReal}</text>
+                <text x="${xReal + barWidth / 2}" y="${yReal - 10}" fill="#ffffff" font-size="14" font-weight="900" text-anchor="middle">${valLabelReal}</text>
             `;
         } else {
             // Pontilhado indicando que não foi informado
             svgContent += `
                 <rect x="${xReal}" y="${height - 45}" width="${barWidth}" height="1" fill="rgba(255,255,255,0.2)"/>
-                <text x="${xReal + barWidth / 2}" y="${height - 50}" fill="rgba(255,255,255,0.4)" font-size="11" font-weight="700" text-anchor="middle">N/A</text>
+                <text x="${xReal + barWidth / 2}" y="${height - 50}" fill="rgba(255,255,255,0.4)" font-size="12" font-weight="900" text-anchor="middle">N/A</text>
             `;
         }
         
         // Rótulo do Mês no eixo X
         const mesLabel = d.period.split(" de ")[0];
         svgContent += `
-            <text x="${xGroup + groupWidth / 2}" y="${height - 15}" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle">${mesLabel}</text>
+            <text x="${xGroup + groupWidth / 2}" y="${height - 15}" fill="#ffffff" font-size="17" font-weight="900" text-anchor="middle">${mesLabel}</text>
         `;
     });
     
