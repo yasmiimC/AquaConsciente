@@ -740,8 +740,8 @@ body {
 /* Gota Dinâmica Principal */
 .droplet-interactive-wrapper {
     position: relative;
-    width: 200px;
-    height: 240px;
+    width: 230px;
+    height: 270px;
     margin: 1rem auto 1.5rem auto;
     display: flex;
     justify-content: center;
@@ -764,34 +764,36 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    width: 80%;
+    width: 90%;
     display: flex;
     flex-direction: column;
     pointer-events: none;
 }
 
 .droplet-percentage {
-    font-size: 2.25rem;
+    font-size: 2.5rem;
     font-weight: 800;
     color: var(--text-white);
-    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
     line-height: 1.1;
 }
 
 .droplet-label {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
-    margin-top: 0.25rem;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-top: 0.35rem;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 
 .droplet-sub {
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.6);
-    margin-top: 0.1rem;
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.95);
+    margin-top: 0.25rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    line-height: 1.25;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 /* Feedback Inteligente */
@@ -1257,7 +1259,7 @@ body {
 }
 
 .chart-container {
-    height: 380px !important;
+    height: 420px !important;
     width: 100%;
     display: block !important;
     padding-top: 1.5rem;
@@ -2269,15 +2271,66 @@ select option,
 
 @media (max-width: 580px) {
     .report-summary-cards {
-        grid-template-columns: 1fr !important;
-        gap: 1.25rem !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
     }
     .report-summary-cards .summary-card {
-        padding: 1.5rem 1.25rem !important;
+        padding: 1rem 0.75rem !important;
+    }
+    .report-summary-cards .summary-card .card-title-lbl {
+        font-size: 0.75rem !important;
     }
     .report-summary-cards .summary-card .card-val-lbl {
-        font-size: 1.9rem !important;
+        font-size: 1.35rem !important;
     }
+}
+
+/* Indicador de Rolagem Bouncing (IHC: Guia de Rolagem Inicial) */
+.scroll-indicator {
+    position: fixed;
+    bottom: 90px; /* Acima da barra de navegação bottom-nav */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    pointer-events: auto;
+    z-index: 100;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.9);
+    background: rgba(18, 25, 41, 0.75);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+}
+
+.scroll-indicator i {
+    font-size: 1rem;
+    margin-top: 3px;
+    color: var(--accent);
+    animation: scroll-bounce-anim 1.5s infinite;
+}
+
+@keyframes scroll-bounce-anim {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-6px);
+    }
+    60% {
+        transform: translateY(-3px);
+    }
+}
+
+.scroll-indicator.fade-out {
+    opacity: 0;
+    visibility: hidden;
 }
 
 
